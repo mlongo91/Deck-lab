@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Deck Lab">
+<meta name="theme-color" content="#0E141B">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAEKElEQVR4nO3dMY4TSRiG4ZoViGARERmX4AZEhCQcgEOgDREBmnDFIeYAmxByLYgGiQ2QpRljm3F1u7vr+58nY4YR7epXRWF3FVfPnr/42SDEX2tfAMxJ0EQRNFEETRRBE0XQRBE0UQRNFEETRdBEETRRBE0UQRNF0EQRNFEETRRBE0XQRBE0UQRNFEETRdBEETRRBE0UQRNF0EQRNFEETRRBE0XQRBE0UQRNFEET5dHaFzC3D+8er30Jq7m+uV37ElZ3lfJfUlQOeV/lsCOWHGK+r/J4DB905Zt3StVxGXrJceimVf7r1ngEzNB3Vbt5+6q//tYGDnp/NnIzf9kfh2pLj2GDhkMETRRBE0XQRBE0UQRNFEETJe5pu15fPz9d+xIu5tXLJye///r9t4Wu5PLKB50c8kPtxiAh7NJLDjHflzAeZYNOuHmXMPq4lAx69Jt2aSOPT/k19F1vPtYbji+ffqx9CbMqN0Mfm30qxtza8dc96ixdLuhDqsa8k/T6BU0UQRNF0EQRNFEETRRBE0XQRBE0UQRNFEETRdBEETRRBE0UQRNF0ETJeRB2ZYd2flziOeN/3n7/7Wv//vf37H/OqAQ90aktTLvvzRH2oZD3vydsS45JHrofb+q+vVMx9/y+ZILudG6kvVGfG2n1qAVNFEF36J1tz/253tm28iwtaKIImiiCJoqgiSLoDr0flJz7c70flFT+gEXQRBF0p3Nn295Z/dzZtvLs3JqgJ3lopFOf5XhopNVjbs3DSZPtYr3003a7WD1td5qgZ7LUkbTiPc2SgyiCJoqgiSJoogiaKIImiqCJImiiCJoogiaKj75n4uSkbRD0RE5O2hZLjgmcnLQ9gu7k5KRtEjRRBN3ByUnbJWiiCJoogiaKoIki6A5OTtouQRNF0J2cnLRNgp7AyUnb4+GkiZyctC2CnomTk7bBkoMogiaKoIkiaKIImiiCJoq37Va01E7xSozeCpbaKV6RJcfCltopXpWgF7TUTvHKBE0UQS9kqZ3i1QmaKIImyrBBX9/c3vv1h3ePV7oStmTYoA8RNUO/e399c/tbxFuN+s3HR13/wPMBy3mGn6H3lx7UNnzQrY0T9VI7xSuLCLq1X1GPEPZSO8Wrihu1P0X96uWTha7kuKV2ildk9FYk3vnFLDmgNUETRtBEETRRBE0UQTfPHCe9/nJBv37/7eDXk27qOY697mPjtHXeCL2jatRJys3QrY07+yxl5PEpGXRrY9+0Sxp9XMoG3dr4N29uCeNx9ez5i59rX8QWfP38dO1LWE1CyDuCJkrpJQd5BE0UQRNF0EQRNFEETRRBE0XQRBE0UQRNFEETRdBEETRRBE0UQRNF0EQRNFEETRRBE0XQRBE0UQRNFEETRdBEETRRBE0UQRNF0EQRNFEETRRBE0XQRPkfQHoFfk2t8tQAAAAASUVORK5CYII=">
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAEKElEQVR4nO3dMY4TSRiG4ZoViGARERmX4AZEhCQcgEOgDREBmnDFIeYAmxByLYgGiQ2QpRljm3F1u7vr+58nY4YR7epXRWF3FVfPnr/42SDEX2tfAMxJ0EQRNFEETRRBE0XQRBE0UQRNFEETRdBEETRRBE0UQRNF0EQRNFEETRRBE0XQRBE0UQRNFEETRdBEETRRBE0UQRNF0EQRNFEETRRBE0XQRBE0UQRNFEET5dHaFzC3D+8er30Jq7m+uV37ElZ3lfJfUlQOeV/lsCOWHGK+r/J4DB905Zt3StVxGXrJceimVf7r1ngEzNB3Vbt5+6q//tYGDnp/NnIzf9kfh2pLj2GDhkMETRRBE0XQRBE0UQRNFEETJe5pu15fPz9d+xIu5tXLJye///r9t4Wu5PLKB50c8kPtxiAh7NJLDjHflzAeZYNOuHmXMPq4lAx69Jt2aSOPT/k19F1vPtYbji+ffqx9CbMqN0Mfm30qxtza8dc96ixdLuhDqsa8k/T6BU0UQRNF0EQRNFEETRRBE0XQRBE0UQRNFEETRdBEETRRBE0UQRNF0ETJeRB2ZYd2flziOeN/3n7/7Wv//vf37H/OqAQ90aktTLvvzRH2oZD3vydsS45JHrofb+q+vVMx9/y+ZILudG6kvVGfG2n1qAVNFEF36J1tz/253tm28iwtaKIImiiCJoqgiSLoDr0flJz7c70flFT+gEXQRBF0p3Nn295Z/dzZtvLs3JqgJ3lopFOf5XhopNVjbs3DSZPtYr3003a7WD1td5qgZ7LUkbTiPc2SgyiCJoqgiSJoogiaKIImiqCJImiiCJoogiaKj75n4uSkbRD0RE5O2hZLjgmcnLQ9gu7k5KRtEjRRBN3ByUnbJWiiCJoogiaKoIki6A5OTtouQRNF0J2cnLRNgp7AyUnb4+GkiZyctC2CnomTk7bBkoMogiaKoIkiaKIImiiCJoq37Va01E7xSozeCpbaKV6RJcfCltopXpWgF7TUTvHKBE0UQS9kqZ3i1QmaKIImyrBBX9/c3vv1h3ePV7oStmTYoA8RNUO/e399c/tbxFuN+s3HR13/wPMBy3mGn6H3lx7UNnzQrY0T9VI7xSuLCLq1X1GPEPZSO8Wrihu1P0X96uWTha7kuKV2ildk9FYk3vnFLDmgNUETRtBEETRRBE0UQTfPHCe9/nJBv37/7eDXk27qOY697mPjtHXeCL2jatRJys3QrY07+yxl5PEpGXRrY9+0Sxp9XMoG3dr4N29uCeNx9ez5i59rX8QWfP38dO1LWE1CyDuCJkrpJQd5BE0UQRNF0EQRNFEETRRBE0XQRBE0UQRNFEETRdBEETRRBE0UQRNF0EQRNFEETRRBE0XQRBE0UQRNFEETRdBEETRRBE0UQRNF0EQRNFEETRRBE0XQRPkfQHoFfk2t8tQAAAAASUVORK5CYII=">
+<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiQ29tbWFuZGVyIERlY2sgTGFiIiwic2hvcnRfbmFtZSI6IkRlY2sgTGFiIiwic3RhcnRfdXJsIjoiLi8iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMEUxNDFCIiwidGhlbWVfY29sb3IiOiIjMEUxNDFCIiwib3JpZW50YXRpb24iOiJwb3J0cmFpdCIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3BuZztiYXNlNjQsaVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQWdBQUFBSUFDQVlBQUFEMGVOVDZBQUFPaGtsRVFWUjRuTzNkUFk0VVNSZUdVZmpVYUF3UUZoNmJtQjJNTldZN0xJQkZqREJSR3kxTXhDSllBRTZiYkd1d2FJblBRTVVVMFBXVFZWa1JOK0k5eDZWSndzaU0rMFJXVGMvajV5OWVmbnNFQUVUNVgrOEZBQUR0Q1FBQUNDUUFBQ0NRQUFDQVFBSUFBQUlKQUFBSUpBQUFJSkFBQUlCQUFnQUFBZ2tBQUFna0FBQWdrQUFBZ0VBQ0FBQUNDUUFBQ0NRQUFDQ1FBQUNBUUFJQUFBSUpBQUFJSkFBQUlKQUFBSUJBQWdBQUFna0FBQWdrQUFBZ2tBQUFnRUFDQUFBQ0NRQUFDQ1FBQUNDUUFBQ0FRQUlBQUFJSkFBQUlKQUFBSUpBQUFJQkFBZ0FBQWdrQUFBZ2tBQUFna0FBQWdFQUNBQUFDQ1FBQUNDUUFBQ0NRQUFDQVFBSUFBQUlKQUFBSUpBQUFJSkFBQUlCQUFnQUFBZ2tBQUFna0FBQWdrQUFBZ0VBQ0FBQUNDUUFBQ0NRQUFDQ1FBQUNBUUFJQUFBSUpBQUFJSkFBQUlKQUFBSUJBQWdBQUFna0FBQWdrQUFBZ2tBQUFnRUFDQUFBQ0NRQUFDQ1FBQUNDUUFBQ0FRQUlBQUFJSkFBQUlKQUFBSUpBQUFJQkFBZ0FBQWdrQUFBZ2tBQUFna0FBQWdFQUNBQUFDQ1FBQUNDUUFBQ0NRQUFDQVFBSUFBQUlKQUFBSUpBQUFJSkFBQUlCQUFnQUFBZ2tBQUFna0FBQWdrQUFBZ0VBQ0FBQUNDUUFBQ0NRQUFDQ1FBQUNBUUFJQUFBSUpBQUFJSkFBQUlKQUFBSUJBQWdBQUFna0FBQWdrQUFBZ2tBQUFnRUJYdlJmQWZONitmdEo3Q2JEWXU0OWZleThCbW5yOC9NWExiNzBYd2ZnTWZXWWpDSmlkQU9Bc0JqK3pFd0xNU2dCd0VvT2ZORUtBMmZnU0lJc1ovaVJ5M3pNYmJ3QTRtZzBRdnZNMmdCbDRBOEJSREgvNGorZUJHUWdBRHJMWndlODhGNHhPQUxDWFRRNTI4M3d3TWdFQUFJRUVBRHM1M2NCaG5oTkc1YjhDNEVGcmJHcStLYzBvM084azh2OENZRlUyUVVhMGZkODYwWlBDUndEODV0UU4wUEJuQnFmZXg4S0IwWGdEd05rTWZtYXp1YWNOZFdibURRQS9zZUhCNlR3L2pFUUFjQmFuZjJibS9tWm1Bb0NUMlJ4SjRENW5WZ0tBSDd5K2hQTjVqaGlGQUFDQVFBS0FrM2d0U2hMM096TVNBQUFRU0FBQVFDQUJBQUNCQkFBQUJCSUFBQkJJQUFCQUlBRUFBSUVFQUFBRUVnQUFFRWdBQUVBZ0FRQUFnUVFBQUFRU0FBQVFTQUFBUUNBQkFBQ0JCQUFBQkJJQUFCQklBQUJBSUFFQUFJR3VlaThBV3Z2ODRWbnZKVEM1di83OFkvVnIvdjNQdjZ0Zmsyd0NnQWlHUHFQNzlSNFdCSnhMQURBMWc1OVpiZTV0SWNDcEJBQlRNdmhKSVFRNGxTOEJNaDNEbjBUdWU1YnlCb0JwMkFCSjUyMEFTM2dEd0JRTWYvaVA1NEZqQ0FDR1o3T0QzM2t1T0VRQU1EU2JIT3ptK1dBZkFRQUFnUVFBdzNLNmdjTThKK3dpQUJpU1RRMk81M25oSVFJQUFBSUpBSWJqTkFQTGVXNzRsVjhFUkt6ckc3Yy9ZN2k3dmUrOUJDWmtCMlFvYTV4aURINUdzN2xuencyQnp4K2UrUzJCL09BakFLSVkvb3pNL2N1YUJBQXhiSjdNd0gzTVdnUUF3empuOWI5Tms1bWNjei83TWlBYkFnQUFBZ2tBcHVmMHo0emMxNXhMQUFCQUlBRUFBSUVFQUFBRUVnQUFFRWdBQUVBZ0FRQUFnUVFBQUFRU0FBQVFTQUFBUUNBQkFBQ0JCQUFBQkJJQUFCQklBQUJBSUFFQUFJRUVBQUFFRWdBQUVFZ0FBRUFnQVFBQWdRUUFBQVFTQUFBUVNBQUFRQ0FCQUFDQkJBQUFCQklBQUJCSUFBQkFJQUVBQUlFRUFBQUVFZ0FBRUVnQUFFQWdBUUFBZ1FRQUFBUVNBQUFRU0FBQVFDQUJBQUNCQkFBQUJCSUFBQkJJQUFCQUlBRUFBSUVFQUFBRUVnQUFFRWdBQUVBZ0FRQUFnUVFBQUFTNjZyMEE0RGgzdC9kNy8vejZ4dVA4NXRXWGd6L3ovdFBUQml1Qit1d1lVTmlob2Ivclo1Tmk0Smlodit2bnhRREpjbllKR01pU3diL3Y3ODhjQWtzSC83NXJDQUVTemJzN3dJRE9IZnk3cmpkVENLd3grSGRkVXdpUXhKY0FvWWkxaDMrcmE3ZDBpZUhmOHZwUWlRQ0FBbG9NNk5Fam9OVndGZ0drRUFEUVdjdkJQR29FdEI3S0lvQUVBZ0E2NmpHUVI0dUFYc05ZQkRBN0FRQ2Q5QnpFbzBSQTd5SGMrOStIU3hJQTBFR0ZBVnhoRGZ0VUdiNVYxZ0ZyRXdBQUVFZ0FRR09WVHQ2VjFyS3QycW03Mm5wZ0RRSUFBQUlKQUdpbzRvbTcycHFxbnJhcnJndE9KUUFBSUpBQUFJQkFBZ0FhcWZhcWZWdVZ0VlYvelY1OWZiQ0VBQUNBUUFJQUFBSUpBQUFJSkFBQUlKQUFBSUJBQWdBQUFna0FBQWdrQUFBZ2tBQ0FScTV2cm5vdllhY3FhM3YvNldudkpleFZmWDJ3aEFBQWdFQUNBQUFDQ1FCb3FNcXI5bTNWMWxUMU5YdlZkY0dwQkFBQUJCSUEwRmlsRTNlbHRXeXJkdHF1dGg1WWd3QUFnRUFDQURxb2NQS3VzSVo5cXB5NnE2d0QxaVlBb0pPZUE3ajY4Ti9vUFh4Ny8vdHdTUUlBT3VveGlFY1ovaHU5aHJEaHord0VBSFRXY2lDUE52dzNXZzlqdzU4RUFnQUthREdZUngzK0c2MkdzdUZQQ2dFQVJWeHlRSTgrL0RjdVBad05mNUxNc1N2QUpEYUQrdTcyZnRYcnpXUXpwTis4K3JMNk5TSEpmTHNEVE9EY0VKaHg4UDlxalJBdytFazIveTRCQTlzZTVJZGlJR0hvUDJSN2lCOFRBNFkrZkplNVk4Q0FVZ2Y4RW9ZN0hNK1hBQUVna0FBQWdFQUNBQUFDQ1FBQUNDUUFBQ0NRQUFDQVFBSUFBQUlKQUFBSUpBQUFJSkFBQUlCQUFnQUFBZ2tBQUFna0FBQWdrQUFBZ0VBQ0FBQUNDUUFBQ0NRQUFDQ1FBQUNBUUFJQUFBSUpBQUFJSkFBQUlKQUFBSUJBQWdBQUFna0FBQWdrQUFBZ2tBQUFnRUFDQUFBQ0NRQUFDQ1FBQUNDUUFBQ0FRQUlBQUFJSkFBQUlkTlY3QWNCeDdtN3Y5Lzc1OVkzSCtjMnJMd2QvNXYybnB3MVdBdlhaTWFDd1EwTi8xODhteGNBeFEzL1h6NHNCa3VYc0VqQ1FKWU4vMzkrZk9RU1dEdjU5MXhBQ0pKcDNkNEFCblR2NGQxMXZwaEJZWS9EdnVxWVFJSWt2QVVJUmF3Ly9WdGR1NlJMRHYrWDFvUklCQUFXMEdOQ2pSMENyNFN3Q1NDRUFvTE9XZzNuVUNHZzlsRVVBQ1FRQWROUmpJSThXQWIyR3NRaGdkZ0lBT3VrNWlFZUpnTjVEdVBlL0Q1Y2tBS0NEQ2dPNHdocjJxVEo4cTZ3RDFpWUFBQ0NRQUlER0twMjhLNjFsVzdWVGQ3WDF3Qm9FQUFBRUVnRFFVTVVUZDdVMVZUMXRWMTBYbkVvQUFFQWdBUUFBZ1FRQU5GTHRWZnUyS211ci9wcTkrdnBnQ1FFQUFJRUVBQUFFRWdBQUVFZ0FBRUFnQVFBQWdRUUFBQVFTQUFBUVNBQUFRQ0FCQUkxYzMxejFYc0pPVmRiMi90UFQza3ZZcS9yNllBa0JBQUNCQkFBQUJCSUEwRkNWViszYnFxMnA2bXYycXV1Q1V3a0FBQWdrQUtDeFNpZnVTbXZaVnUyMFhXMDlzQVlCQUFDQkJBQjBVT0hrWFdFTisxUTVkVmRaQjZ4TkFFQW5QUWR3OWVHLzBYdjQ5djczNFpJRUFIVFVZeENQTXZ3M2VnMWh3NS9aQ1FEb3JPVkFIbTM0YjdRZXhvWS9DUVFBRk5CaU1JODYvRGRhRFdYRG54UUNBSXE0NUlBZWZmaHZYSG80Ry80a21XTlhnRWxzQnZYZDdmMnExNXZKWmtpL2VmVmw5V3RDa3ZsMkI1akF1U0V3NCtELzFSb2hZUENUYlA1ZEFnYTJQY2dQeFVEQzBIL0k5aEEvSmdZTWZmZ3VjOGVBQWFVTytDVU1kemllTHdFQ1FDQUJBQUNCQkFBQUJCSUFBQkJJQUFCQUlBRUFBSUVFQUFBRUVnQUFFRWdBQUVBZ0FRQUFnUVFBQUFRU0FBQVFTQUFBUUNBQkFBQ0JCQUFBQkJJQUFCQklBQUJBSUFFQUFJRUVBQUFFRWdBQUVFZ0FBRUNncTk0TEFNWjFkM3UvOTgrdmIyd3hVSlduRTFqazBORGY5Yk5pQUdyeFJBSkhXVEw0OS8xOUlRQTFlQktCdmM0ZC9MdXVKd1NnTDE4Q0JIWmFlL2kzdWpad21BQUFIdFJpUUlzQTZFY0FBTDlwT1poRkFQUWhBSUNmOUJqSUlnRGFFd0RBRHowSHNRaUF0Z1FBOE9qUm94b0R1TUlhSUlVQUFJQkFBZ0FvZGZLdXRCYVltUUFBZ0VBQ0FNSlZQSEZYWEJQTVJnQUFRQ0FCQUFDQkJBQUVxL3lxdmZMYVlBWUNBQUFDQ1FCTzh2YjFrOTVMQU9BTUFvQWYzbjM4Mm5zSkFEUWlBQUFna0FEZ1pENEdBQmlYQU9Bc0lnQmdUQUtBbi9nZUFFQUdBY0RaM3I1KzRrMEF3R0FFQUw4NTlTMkFDQmpQOWMxVjd5WHNWSGx0TUFOUEdLdmFqZ0FmSndEVUpRQjQwTHVQWDg4KzBYc2pBRkNYandEWXlRaytROFZYN1JYWEJMTVJBQUFRU0FDd2w3Y0FHU3FkdUN1dEJXWW1BRGhJQkFETVJ3QndGQkV3dndvbjd3cHJnQlFDZ0tPOSsvaFZDRXl1NXdBMi9LRXRBY0JpSW1CdVBRYXg0US90Q1FCTzRtM0EzRm9PWk1NZitoQUFuRVVJekt2RllEYjhvUjlQSDZ2WWpnQy9BWEFlMXpkWGorNXU3eTkyYmFBZlR5Q3J1OVFiZ2IvKy9PTWkxMlcvemFCZUt3UU1mcWpCa3dnYzVkd1FNUGloRms4a3NNajJJRDhVQTRZKzFPWHBCRTVtd01PNC9GY0FBQkJJQUFCQUlBRUFBSUVFQUFBRUVnQUFFRWdBQUVBZ0FRQUFnUVFBQUFRU0FBQVFTQUFBUUNBQkFBQ0JCQUFBQkJJQUFCQklBQUJBSUFFQUFJRUVBQUFFRWdCTTcrNzJ2dmNTWUhYdWE4NGxBQmpHMy8vODIzc0pNRHpQRVJzQ2dBaE9TOHpFL2N3YUJBQXhiSnJNd0gzTVdnUUFVV3llak16OXk1b2VQMy94OGx2dlJjQVNuejg4VytVNjF6ZFhxMXdITG0ydHdlL3pmN2JaQVlubE5BVWs4eEVBdzNHS2dlVThOL3hLQUFCQUlBSEFrSnhtNEhpZUZ4NGlBQmlXVFEwTzg1eXdpd0FBbUpUaHp6NENnS0haNEFCT0l3QVluZ2lBMzNrdU9NUXZBbUlhYS8yQ0lCaVp3Yyt4QkFEVEVRS2tNdnhad2tjQVRNY21TQ0wzUFV0NUE4RFV2QTFnZGdZL3B4SUFSQkFDek1iZzUxd0NnRGhpZ0JFWitLeE5BQUJBSUY4Q0JJQkFBZ0FBQWdrQUFBZ2tBQUFna0FBQWdFQUNBQUFDQ1FBQUNDUUFBQ0NRQUFDQVFBSUFBQUlKQUFBSUpBQUFJSkFBQUlCQUFnQUFBZ2tBQUFna0FBQWdrQUFBZ0VBQ0FBQUNDUUFBQ0NRQUFDQ1FBQUNBUUFJQUFBSUpBQUFJSkFBQUlKQUFBSUJBQWdBQUFna0FBQWdrQUFBZ2tBQUFnRUFDQUFBQ0NRQUFDQ1FBQUNDUUFBQ0FRQUlBQUFJSkFBQUlKQUFBSUpBQUFJQkFBZ0FBQWdrQUFBZ2tBQUFna0FBQWdFQUNBQUFDQ1FBQUNDUUFBQ0NRQUFDQVFBSUFBQUlKQUFBSUpBQUFJSkFBQUlCQUFnQUFBZ2tBQUFna0FBQWdrQUFBZ0VBQ0FBQUNDUUFBQ0NRQUFDQ1FBQUNBUUFJQUFBSUpBQUFJSkFBQUlKQUFBSUJBQWdBQUFna0FBQWdrQUFBZ2tBQUFnRUFDQUFBQ0NRQUFDQ1FBQUNDUUFBQ0FRQUlBQUFJSkFBQUlKQUFBSUpBQUFJQkFBZ0FBQWdrQUFBZ2tBQUFna0FBQWdFQUNBQUFDQ1FBQUNDUUFBQ0NRQUFDQVFBSUFBQUlKQUFBSUpBQUFJSkFBQUlCQUFnQUFBZ2tBQUFna0FBQWdrQUFBZ0VBQ0FBQUNDUUFBQ0NRQUFDQ1FBQUNBUUFJQUFBSUpBQUFJOUgrRitLa1Q5enM2eXdBQUFBQkpSVTVFcmtKZ2dnPT0iLCJzaXplcyI6IjUxMng1MTIiLCJ0eXBlIjoiaW1hZ2UvcG5nIiwicHVycG9zZSI6ImFueSBtYXNrYWJsZSJ9XX0=">
+
+<title>Commander Deck Lab</title>
+<style>
+  :root{
+    --bg:#0E141B; --panel:#16202B; --panel2:#1C2937; --line:#2B3D4E;
+    --text:#E7E2D4; --dim:#8FA2B2; --gold:#C9A227; --goldsoft:#8A7220;
+    --good:#5AA36B; --warn:#D39A3A; --bad:#C4544A;
+    --serif:Georgia,'Iowan Old Style','Times New Roman',serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5}
+  .wrap{max-width:900px;margin:0 auto;padding:16px;padding-top:max(16px,env(safe-area-inset-top));padding-bottom:max(16px,env(safe-area-inset-bottom))}
+  .banner{padding:10px 12px;border-radius:4px;font-size:12.5px;margin-bottom:12px;border:1px solid var(--line);color:var(--dim)}
+  .banner.ok{border-color:var(--good);color:var(--good)}
+  .banner.block{border-color:var(--bad);color:var(--bad)}
+  .banner b{color:var(--text)}
+  h1{font-family:var(--serif);font-size:24px;margin:0;font-weight:400;letter-spacing:.3px}
+  h2{font-family:var(--serif);font-size:19px;margin:0 0 4px;font-weight:400}
+  .sub{color:var(--dim);font-size:12.5px;margin:2px 0 10px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;margin-bottom:12px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .between{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  button{font-family:var(--sans);font-size:13.5px;padding:9px 13px;border-radius:4px;border:1px solid var(--line);
+    background:transparent;color:var(--text);cursor:pointer}
+  button:hover{border-color:var(--goldsoft)}
+  button.primary{background:var(--gold);color:#15100A;border-color:var(--gold);font-weight:600}
+  button.danger{border-color:var(--bad);color:var(--bad)}
+  button.small{padding:5px 9px;font-size:12px}
+  button[disabled]{opacity:.45;cursor:default}
+  textarea,input,select{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:4px;
+    padding:8px;font-size:13px;font-family:var(--sans)}
+  textarea{width:100%;min-height:200px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;resize:vertical}
+  .tabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+  .tabs button{padding:6px 10px;font-size:12.5px;border-color:transparent;color:var(--dim)}
+  .tabs button.on{background:var(--panel2);border-color:var(--line);color:var(--text)}
+  .rail{display:flex;gap:4px}
+  .rail div{flex:1;text-align:center;padding:10px 4px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;color:var(--dim)}
+  .rail div.on{background:var(--gold);border-color:var(--gold);color:#15100A}
+  .rail b{font-family:var(--serif);font-size:20px;font-weight:400;display:block;line-height:1}
+  .rail span{font-size:9.5px;display:block;margin-top:4px}
+  .stats{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px}
+  .stat b{font-family:var(--serif);font-size:21px;font-weight:400;display:block;line-height:1.1}
+  .stat span{font-size:11.5px;color:var(--dim)}
+  .stat.warn b{color:var(--warn)}
+  .card-row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--panel2);cursor:pointer}
+  .card-row:hover{color:var(--gold)}
+  .gc{color:var(--gold)}
+  .note{padding:10px 12px;border:1px solid var(--line);border-radius:4px;color:var(--dim);font-size:12.5px;margin-bottom:12px}
+  .note.busy{border-color:var(--goldsoft);color:var(--gold)}
+  .note.err{border-color:var(--bad);color:var(--bad)}
+  .bar{position:sticky;bottom:0;background:var(--panel2);border:1px solid var(--gold);border-radius:6px;padding:12px;margin-top:14px}
+  .modal{position:fixed;inset:0;background:rgba(5,8,12,.8);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .modal .inner{background:var(--panel);border:1px solid var(--line);border-radius:8px;max-width:460px;width:100%;
+    max-height:88vh;overflow:auto;padding:16px}
+  .modal img{width:100%;border-radius:10px;margin-bottom:10px}
+  .oracle{white-space:pre-wrap;font-size:13px;line-height:1.55;color:var(--text);border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+  .hidden{display:none}
+  .lbl{font-size:12px;color:var(--dim);display:block;margin-bottom:3px}
+  a{color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="between" style="margin-bottom:14px">
+    <div>
+      <h1>Commander Deck Lab</h1>
+      <div class="sub" style="margin:2px 0 0">Legality, bracket, win paths, and upgrades — live Scryfall data</div><div class="sub" style="margin:2px 0 0;color:var(--gold);font-size:11px">build 8 · local combo index</div>
+    </div>
+    <div id="cmdrBox" style="text-align:right"></div>
+  </div>
+
+  <div id="boot"></div>
+  <div id="messages"></div>
+
+  <div id="inputScreen">
+    <div class="panel">
+      <h2>Paste a decklist</h2>
+      <div class="sub">Plain text, or a Moxfield / Archidekt export. Set codes, collector numbers, and category tags are ignored. Mark your commander with <b>*CMDR*</b> if you like.</div>
+      <textarea id="deckInput" placeholder="1 Zimone, Infinite Analyst *CMDR*&#10;1 Sol Ring&#10;1 Cultivate&#10;..."></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="primary" id="analyzeBtn">Analyze deck</button>
+        <button id="settingsBtn">Settings</button>
+      </div>
+      <div id="savedList"></div>
+    </div>
+  </div>
+
+  <div id="workspace" class="hidden">
+    <div class="tabs" id="tabs"></div>
+    <div id="panels"></div>
+    <div id="stagedBar"></div>
+  </div>
+</div>
+
+<div class="wrap" style="padding-top:0">
+  <div class="sub" style="text-align:center;padding:18px 0">
+    Card data from <a href="https://scryfall.com" target="_blank" rel="noopener">Scryfall</a> ·
+    Combo data from <a href="https://commanderspellbook.com" target="_blank" rel="noopener">Commander Spellbook</a>
+  </div>
+</div>
+
+<div id="modalHost"></div>
+
+<script>
+/* =================================================================
+   Commander Deck Lab — standalone build
+   All card data is live from Scryfall. AI features are optional.
+   ================================================================= */
+
+const SCRY = "https://api.scryfall.com";
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const norm = s => (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()
+  .replace(/[’']/g,"'").replace(/\s+/g," ").trim();
+const oracleOf = c => c ? (c.oracle_text || (c.card_faces||[]).map(f=>f.oracle_text||"").join("\n")) : "";
+const typeOf = c => c ? (c.type_line || (c.card_faces||[]).map(f=>f.type_line||"").join(" // ")) : "";
+const priceOf = c => { const p = c && c.prices ? (c.prices.usd || c.prices.usd_foil) : null; return p ? parseFloat(p) : null; };
+const money = v => v==null ? "—" : "$"+v.toFixed(2);
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const imgOf = c => c && (c.image_uris ? c.image_uris.normal : (c.card_faces && c.card_faces[0].image_uris ? c.card_faces[0].image_uris.normal : null));
+
+const BRACKETS = [
+  {n:1,name:"Exhibition",blurb:"Ultra-casual. No mass land denial, extra turns, two-card combos, or Game Changers."},
+  {n:2,name:"Core",blurb:"Roughly precon level. No mass land denial, chained extra turns, two-card combos, or Game Changers."},
+  {n:3,name:"Upgraded",blurb:"Beyond precon. Up to three Game Changers, late-game two-card combos allowed."},
+  {n:4,name:"Optimized",blurb:"High power. No restrictions beyond the banned list."},
+  {n:5,name:"cEDH",blurb:"High power with a competitive, metagame-focused mindset."}
+];
+
+
+const MLD_NAMES = new Set(["armageddon","ravages of war","catastrophe","jokulhaups","obliterate",
+  "decree of annihilation","wildfire","impending disaster","winter orb","static orb","rising waters",
+  "mana vortex","global ruin","epicenter","cleansing","thoughts of ruin","tectonic break",
+  "fall of the thran","dead of winter","boom // bust","death cloud"].map(norm));
+
+const ANY_NUMBER = ["relentless rats","dragon's approach","persistent petitioners","shadowborn apostle",
+  "rat colony","slime against humanity","templar knight","nazgul","seven dwarves"];
+
+/* ---------------------------- state ------------------------------- */
+const S = {
+  deck:[], cards:{}, commanders:[], baseline:null, ai:null, recs:[], recNote:"",
+  staged:[], tab:"bracket", budget:25, target:0, dirty:false, missing:[],
+  combos:{included:[],almost:[],status:"idle",error:""}, comboDB:null,
+  key: localStorage.getItem("cdl_key") || "", showSettings:false
+};
+
+/* -------------------------- decklist parse ------------------------ */
+function parseDecklist(text){
+  const out=[]; let section="main";
+  for (let raw of (text||"").split(/\r?\n/)){
+    let line = raw.trim(); if(!line) continue;
+    if(line.startsWith("//")){
+      section = /commander/i.test(line) ? "commander" : /sideboard|maybe/i.test(line) ? "side" : "main";
+      continue;
+    }
+    if(/^(commander|commanders)\s*[:(]?$/i.test(line)){ section="commander"; continue; }
+    if(/^(deck|mainboard|main deck|creatures?|lands?|spells?|artifacts?|enchantments?|instants?|sorceries|planeswalkers?)\s*[:(]?$/i.test(line)){ section="main"; continue; }
+    if(/^(sideboard|maybeboard|considering)\s*[:(]?/i.test(line)){ section="side"; continue; }
+    const m = line.match(/^(\d+)\s*[xX]?\s+(.*)$/); if(!m) continue;
+    let name = m[2], isC = /\*CMDR\*/i.test(name) || /\[[^\]]*commander[^\]]*\]/i.test(name);
+    name = name.replace(/\*[^*]*\*/g,"").replace(/\[[^\]]*\]/g,"")
+               .replace(/\([^)]*\)\s*[\w-]*/g,"").replace(/\s*<[^>]*>/g,"")
+               .replace(/\s{2,}/g," ").trim().replace(/[,;]$/,"");
+    if(!name) continue;
+    out.push({qty:parseInt(m[1],10), name, commander:isC||section==="commander", side:section==="side"});
+  }
+  return out.filter(e=>!e.side);
+}
+
+/* ------------------------- scryfall access ------------------------ */
+async function scryCollection(names, onProg){
+  const map={}, missing=[]; const unique=[...new Set(names)];
+  for(let i=0;i<unique.length;i+=70){
+    const chunk=unique.slice(i,i+70);
+    onProg && onProg(i, unique.length);
+    const res = await fetch(SCRY+"/cards/collection",{
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({identifiers: chunk.map(n=>({name:n}))})
+    });
+    if(!res.ok) throw new Error("Scryfall returned "+res.status);
+    const j = await res.json();
+    (j.data||[]).forEach(c=>{ map[norm(c.name)]=c; (c.card_faces||[]).forEach(f=>{ if(f.name) map[norm(f.name)]=c; }); });
+    (j.not_found||[]).forEach(x=>missing.push(x.name));
+    if(i+70<unique.length) await sleep(110);
+  }
+  const still=[];
+  for(const n of missing){
+    try{
+      const r = await fetch(SCRY+"/cards/named?fuzzy="+encodeURIComponent(n));
+      if(r.ok){ const c=await r.json(); map[norm(n)]=c; map[norm(c.name)]=c; } else still.push(n);
+    }catch(e){ still.push(n); }
+    await sleep(110);
+  }
+  return {map, missing: still};
+}
+
+async function scrySearch(q, limit){
+  const url = SCRY+"/cards/search?order=edhrec&unique=cards&q="+encodeURIComponent(q);
+  const r = await fetch(url);
+  if(!r.ok) return [];
+  const j = await r.json();
+  return (j.data||[]).slice(0, limit||12);
+}
+
+async function scryNamed(name){
+  const r = await fetch(SCRY+"/cards/named?fuzzy="+encodeURIComponent(name));
+  if(!r.ok) throw new Error("No card found for “"+name+"”");
+  return r.json();
+}
+
+/* ------------------------ signals & legality ---------------------- */
+const isMLD = c => MLD_NAMES.has(norm(c.name)) ||
+  /destroy all lands|destroy all nonbasic lands|each player sacrifices (a|two|three|all|half)[^.]*lands?|lands don't untap during/i.test(oracleOf(c));
+const isExtraTurn = c => /takes? an extra turn/i.test(oracleOf(c));
+const isTutor = c => {
+  const o = oracleOf(c);
+  if(!/search(es)? your library for/i.test(o)) return false;
+  if(/search your library for (a|up to (two|three|four)) basic land/i.test(o)) return false;
+  if(/search your library for (a|up to (two|three|four)) land card/i.test(o)) return false;
+  return true;
+};
+const isRamp = c => {
+  const t = typeOf(c); if(/land/i.test(t) && !/creature/i.test(t)) return false;
+  const o = oracleOf(c);
+  return /add \{[wubrgcx0-9]/i.test(o) || /search your library for (a|up to (two|three)) (basic )?land/i.test(o);
+};
+const isDraw = c => /draw (a|two|three|four|that many|x) cards?/i.test(oracleOf(c));
+const isInteraction = c =>
+  /(destroy|exile) (target|all|each)|counter target|deals? \d+ damage to (target|each)|return target .* to (its|their) owner's hand/i.test(oracleOf(c));
+const isLand = c => /^land|\bland\b/i.test(typeOf(c).split("//")[0]);
+
+function buildSignals(){
+  const list = S.deck.map(e=>({e, c:S.cards[norm(e.name)]})).filter(x=>x.c);
+  const pick = fn => list.filter(x=>fn(x.c)).map(x=>x.c.name);
+  const nonland = list.filter(x=>!isLand(x.c));
+  const cmcs = nonland.map(x=>x.c.cmc||0);
+  return {
+    gameChangers: list.filter(x=>x.c.game_changer===true).map(x=>x.c.name),
+    tutors: pick(isTutor), massLandDenial: pick(isMLD), extraTurns: pick(isExtraTurn),
+    ramp: pick(isRamp), draw: pick(isDraw), interaction: pick(isInteraction),
+    lands: list.filter(x=>isLand(x.c)).reduce((s,x)=>s+x.e.qty,0),
+    avgCmc: cmcs.length ? cmcs.reduce((a,b)=>a+b,0)/cmcs.length : 0,
+    totalValue: list.reduce((s,x)=>s+(priceOf(x.c)||0)*x.e.qty,0)
+  };
+}
+
+/* --------------------- combo data (same origin) ---------------------
+   Commander Spellbook's API refuses cross-origin browser requests, so a
+   GitHub Action fetches their published bulk data on a schedule and commits
+   combos.json next to this page. Loading it from our own domain means no
+   CORS boundary exists to be blocked. Matching runs locally and instantly. */
+
+const COMBO_URL = new URL("combos.json", location.href).href;
+
+async function loadComboDB(){
+  if(S.comboDB) return S.comboDB;
+  const r = await fetch(COMBO_URL, {cache:"no-cache"});
+  if(r.status===404) throw new Error("combos.json isn't in the repo yet — run the Refresh combo data action");
+  if(!r.ok) throw new Error("combos.json returned "+r.status);
+  const d = await r.json();
+  if(!d || !Array.isArray(d.combos)) throw new Error("combos.json is malformed");
+  S.comboDB = {
+    generated: d.generated || null,
+    note: d.note || "",
+    rows: d.combos.map(row=>({
+      id: row[0], cards: row[1] || [], result: row[2] || "", needsExtra: row[3] || 0,
+      keys: (row[1]||[]).map(norm)
+    }))
+  };
+  return S.comboDB;
+}
+
+/* Speed drives the bracket 3 vs 4 line. Judged on the combined mana value
+   of the pieces from real Scryfall costs, not an opinion. */
+function comboSpeed(cards){
+  let mv = 0, known = true;
+  cards.forEach(n=>{ const c = S.cards[norm(n)]; if(c && c.cmc!=null) mv += c.cmc; else known = false; });
+  if(!known) return "late";
+  return mv <= 5 ? "early" : "late";
+}
+
+function matchCombos(db){
+  const have = new Set(S.deck.map(e=>norm(e.name)));
+  const included = [], almost = [];
+  db.rows.forEach(row=>{
+    const missing = row.keys.filter(k=>!have.has(k));
+    if(missing.length===0) included.push({...row, missing:[]});
+    else if(missing.length===1){
+      const name = row.cards[row.keys.indexOf(missing[0])];
+      almost.push({...row, missing:[name]});
+    }
+  });
+  return {included, almost};
+}
+
+async function loadCombos(){
+  S.combos = {included:[], almost:[], status:"loading", error:""};
+  render();
+  try{
+    const db = await loadComboDB();
+    const {included, almost} = matchCombos(db);
+    S.combos = {included, almost, status:"ok", error:"", generated:db.generated, dbSize:db.rows.length};
+    render();
+    // price and colour-check the near-miss cards
+    const wanted = [...new Set(almost.map(c=>c.missing[0]))].filter(n=>!S.cards[norm(n)]).slice(0,225);
+    if(wanted.length){
+      try{ const {map} = await scryCollection(wanted); Object.assign(S.cards, map); }catch(e){}
+    }
+  }catch(e){
+    S.combos = {included:[], almost:[], status:"error", error:e.message};
+  }
+  render();
+}
+
+function allCombos(){
+  const list = (S.combos.included||[]).map(c=>({
+    cards:c.cards, result:c.result, needsExtra:c.needsExtra, speed:comboSpeed(c.cards),
+    permalink: c.id ? "https://commanderspellbook.com/combo/"+c.id+"/" : null, source:"spellbook"}));
+  ((S.ai&&S.ai.combos)||[]).forEach(c=>{
+    const key = (c.cards||[]).map(norm).sort().join("|");
+    if(!list.some(x=>x.cards.map(norm).sort().join("|")===key))
+      list.push({cards:c.cards||[], result:c.result||"", speed:c.speed||"late", source:"ai"});
+  });
+  return list;
+}
+/* A combo still needing a role card (a sac outlet, a token maker) isn't a
+   two-card combo for bracket purposes, so it doesn't set the floor. */
+const twoCardCombos = () => allCombos().filter(c=>c.cards.length===2 && !c.needsExtra);
+
+function nearMisses(){
+  const ci = new Set(checkLegality().colorIdentity);
+  const have = new Set(S.deck.map(e=>norm(e.name)));
+  const seen = new Set();
+  return (S.combos.almost||[])
+    .map(c=>({combo:c, card:S.cards[norm(c.missing[0])], name:c.missing[0]}))
+    .filter(x=>{
+      if(!x.card || have.has(norm(x.name)) || seen.has(norm(x.name))) return false;
+      if((x.card.legalities||{}).commander!=="legal") return false;
+      if((x.card.color_identity||[]).some(c=>!ci.has(c))) return false;
+      seen.add(norm(x.name)); return true;
+    })
+    .sort((a,b)=>(a.card.edhrec_rank||99999)-(b.card.edhrec_rank||99999))
+    .slice(0,15);
+}
+
+async function comboDiagnose(){
+  const out = ["combos.json URL: "+COMBO_URL];
+  try{
+    const r = await fetch(COMBO_URL,{cache:"no-cache"});
+    out.push("HTTP "+r.status);
+    if(r.ok){
+      const t = await r.text();
+      out.push("size: "+(t.length/1e6).toFixed(2)+" MB");
+      try{
+        const d = JSON.parse(t);
+        out.push("combos: "+(d.combos?d.combos.length:"none"));
+        out.push("generated: "+(d.generated||"unknown"));
+      }catch(e){ out.push("not valid JSON: "+e.message); }
+    } else if(r.status===404){
+      out.push("The workflow hasn't committed combos.json yet. Actions tab \u2192 Refresh combo data \u2192 Run workflow.");
+    }
+  }catch(e){ out.push("fetch threw: "+(e.message||e)); }
+  return out;
+}
+
+
+function checkLegality(){
+  const errors=[], warnings=[];
+  const total = S.deck.reduce((s,e)=>s+e.qty,0);
+  if(total!==100) errors.push("Deck has "+total+" cards. Commander decks are exactly 100, including the commander.");
+  if(!S.commanders.length) errors.push("No commander identified.");
+  S.commanders.forEach(c=>{
+    const t=typeOf(c);
+    if(!(/legendary/i.test(t)&&/creature/i.test(t)) && !/can be your commander/i.test(oracleOf(c)))
+      errors.push(c.name+" can't be a commander — it isn't a legendary creature.");
+  });
+  if(S.commanders.length===2){
+    const ok = S.commanders.every(c=>/partner|friends forever|doctor's companion|choose a background/i.test(oracleOf(c)));
+    if(!ok) errors.push("Two commanders listed, but they don't share a partner-style ability.");
+  }
+  if(S.commanders.length>2) errors.push("More than two commanders listed.");
+
+  const ci = new Set(); S.commanders.forEach(c=>(c.color_identity||[]).forEach(x=>ci.add(x)));
+  S.deck.forEach(e=>{
+    const c = S.cards[norm(e.name)];
+    if(!c){ warnings.push(e.name+" — no card data loaded."); return; }
+    const legal = c.legalities && c.legalities.commander;
+    if(legal==="banned") errors.push(c.name+" is banned in Commander.");
+    else if(legal!=="legal") errors.push(c.name+" isn't legal in Commander ("+(legal||"unknown")+").");
+    const bad = (c.color_identity||[]).filter(x=>!ci.has(x));
+    if(bad.length) errors.push(c.name+" breaks color identity — it's "+bad.join("/")+" and your commander isn't.");
+    const basic = /basic/i.test(typeOf(c)) && /land/i.test(typeOf(c));
+    const many = ANY_NUMBER.includes(norm(c.name)) || /a deck can have (any number|up to (seven|nine))/i.test(oracleOf(c));
+    if(e.qty>1 && !basic && !many) errors.push(e.name+" appears "+e.qty+" times. Commander is singleton.");
+  });
+  return {errors, warnings, colorIdentity:[...ci], total};
+}
+
+function assessBracket(sig, combos, comboStatus){
+  const gc=sig.gameChangers.length, tutors=sig.tutors.length,
+        mld=sig.massLandDenial.length, xt=sig.extraTurns.length;
+  const early = combos.some(c=>c.speed==="early");
+  const comboUnknown = comboStatus && comboStatus!=="ok";
+  let floor=1; const drivers=[];
+  const bump=(n,why)=>{ if(n>floor) floor=n; drivers.push({to:n,why}); };
+
+  if(mld>0) bump(4,"Mass land denial: "+sig.massLandDenial.join(", ")+". Brackets 1–3 exclude it.");
+  if(xt>=2) bump(4,xt+" extra-turn effects — enough to chain, which brackets 1–3 exclude.");
+  else if(xt===1) bump(2,"One extra-turn effect ("+sig.extraTurns[0]+") — fine as long as it isn't chained.");
+  if(gc>3) bump(4,gc+" Game Changers. Bracket 3 caps at three.");
+  else if(gc>0) bump(3,gc+" Game Changer"+(gc>1?"s":"")+": "+sig.gameChangers.join(", ")+".");
+  if(early) bump(4,"An early two-card combo. Bracket 3 allows late-game combos only.");
+  else if(combos.length) bump(3,combos.length+" late-game two-card combo"+(combos.length>1?"s":"")+".");
+  if(tutors>4) bump(4,tutors+" unrestricted tutors — past what “few tutors” describes.");
+  else if(tutors>2) bump(3,tutors+" unrestricted tutors.");
+
+  if(floor===1 && !comboUnknown){
+    const strength = (sig.ramp.length>=8?1:0)+(sig.draw.length>=8?1:0)+(sig.interaction.length>=8?1:0)+(sig.avgCmc<3.3?1:0);
+    if(strength>=2) floor=2;
+  }
+  return {bracket:floor, drivers, blocking:drivers.filter(d=>d.to>=floor), comboUnknown,
+          counts:{gc,tutors,mld,xt,combos: comboUnknown ? "?" : combos.length}};
+}
+
+/* ------------------------ win conditions -------------------------- */
+const WIN_RULES = [
+  {name:"Alternate win condition", test:c=>/you win the game|loses the game/i.test(oracleOf(c)),
+   how:"Cards here end the game outright rather than through damage. Protect the enabler and the game closes without combat."},
+  {name:"Infinite combo", test:()=>false, how:""},
+  {name:"Counter-based beatdown", test:c=>/\+1\/\+1 counter/i.test(oracleOf(c)),
+   how:"Grow threats with counters and multiply them, then push damage through in one or two big swings."},
+  {name:"Combat damage", test:c=>/trample|double strike|flying|can't be blocked|menace/i.test(oracleOf(c)) && /creature/i.test(typeOf(c)),
+   how:"Evasive and oversized creatures close games through repeated attacks."},
+  {name:"Drain and burn", test:c=>/each opponent loses|loses \d+ life|deals \d+ damage to each opponent/i.test(oracleOf(c)),
+   how:"Repeated life loss across the table, ignoring blockers entirely."},
+  {name:"Mill", test:c=>/mills? (a|two|three|four|five|\d+|that many) cards?/i.test(oracleOf(c)),
+   how:"Empty opponents' libraries and win on their draw step."},
+  {name:"Token swarm", test:c=>/create (a|two|three|\w+) .*token/i.test(oracleOf(c)),
+   how:"Build a wide board, then finish with an anthem or a mass pump effect."},
+  {name:"Big X spells", test:c=>/\{X\}/.test(c.mana_cost||"") && !/land/i.test(typeOf(c)),
+   how:"Ramp into an X spell large enough to dominate the board or kill a table in one cast."}
+];
+
+function deriveWinConditions(combos){
+  const list = S.deck.map(e=>S.cards[norm(e.name)]).filter(Boolean);
+  const out = [];
+  if(combos.length) out.push({name:"Infinite combo", reliability:"primary",
+    how:"Assemble a two-card loop and convert it into a win. "+combos.map(c=>c.cards.join(" + ")).join("; ")+".",
+    keyCards: combos.flatMap(c=>c.cards).slice(0,6)});
+  WIN_RULES.forEach(r=>{
+    if(!r.how) return;
+    const hits = list.filter(r.test);
+    if(hits.length>=(r.name==="Alternate win condition"?1:6))
+      out.push({name:r.name, how:r.how, keyCards:hits.slice(0,5).map(c=>c.name),
+        reliability: hits.length>=12 ? "primary" : hits.length>=7 ? "secondary" : "backup", count:hits.length});
+  });
+  const order = {primary:0, secondary:1, backup:2};
+  return out.sort((a,b)=>order[a.reliability]-order[b.reliability]).slice(0,5);
+}
+
+/* ------------------- recommendations via Scryfall ------------------ */
+const THEMES = [
+  ["+1/+1 counters",'o:"+1/+1 counter"', /\+1\/\+1 counter/i],
+  ["landfall",'o:landfall', /landfall/i],
+  ["proliferate",'o:proliferate', /proliferate/i],
+  ["untap effects",'o:"untap target"', /untap target|untap all/i],
+  ["token swarm",'o:token o:create', /create .*token/i],
+  ["sacrifice",'o:"sacrifice a creature"', /sacrifice a creature/i],
+  ["graveyard",'o:"from your graveyard"', /from your graveyard/i],
+  ["artifacts",'t:artifact o:artifact', /artifact/i],
+  ["spellslinger",'o:"instant or sorcery"', /instant or sorcery/i],
+  ["big X spells",'o:"{X}"', /\{X\}/],
+  ["lands matter",'o:"land onto the battlefield"', /land onto the battlefield/i],
+  ["lifegain",'o:"gain life"', /gain life/i]
+];
+const ROLE_Q = {
+  ramp:'(o:"add one mana" or o:"search your library for a basic land card")',
+  draw:'(o:"draw a card" o:whenever)',
+  interaction:'(o:"destroy target" or o:"exile target" or o:"counter target spell")',
+  protection:'(o:hexproof or o:indestructible or o:"protection from")'
+};
+
+function deckThemes(){
+  const list = S.deck.map(e=>S.cards[norm(e.name)]).filter(Boolean);
+  return THEMES.map(([label,q,re])=>({label,q,count:list.filter(c=>re.test(oracleOf(c)||c.mana_cost||"")).length}))
+    .filter(t=>t.count>=5).sort((a,b)=>b.count-a.count).slice(0,3);
+}
+
+function weakestCards(exclude){
+  const cmdr = new Set(S.commanders.map(c=>norm(c.name)));
+  const themeRes = deckThemes().map(t=>THEMES.find(x=>x[0]===t.label)[2]);
+  return S.deck.map(e=>S.cards[norm(e.name)]).filter(Boolean)
+    .filter(c=>!isLand(c) && !cmdr.has(norm(c.name)) && !(exclude||new Set()).has(norm(c.name)))
+    .map(c=>{
+      const o = oracleOf(c);
+      const synergy = themeRes.filter(re=>re.test(o)).length;
+      const rank = c.edhrec_rank || 30000;
+      return {c, score: synergy*8000 - rank - (isRamp(c)||isDraw(c)||isInteraction(c) ? 4000 : 0)};
+    })
+    .sort((a,b)=>a.score-b.score).map(x=>x.c.name);
+}
+
+async function buildRecommendations(){
+  const leg = checkLegality();
+  const ci = leg.colorIdentity.length ? "id<="+leg.colorIdentity.join("").toLowerCase() : "id<=c";
+  const sig = buildSignals();
+  const combos = twoCardCombos();
+  const current = assessBracket(sig, combos, S.combos.status).bracket;
+  const target = S.target || current;
+  const budget = S.budget ? " usd<="+S.budget : "";
+  const capGC = target<=3 && sig.gameChangers.length>=(target===3?3:1);
+  const base = "legal:commander -t:basic "+ci+budget+(capGC?" -is:gamechanger":"");
+  const have = new Set(S.deck.map(e=>norm(e.name)));
+  const queries = [];
+
+  if(target>current){
+    queries.push({why:"Raises power — a Game Changer your colors support", q:"legal:commander "+ci+budget+" is:gamechanger"});
+    queries.push({why:"High-impact staple for this color identity", q:base+" (o:\"draw\" or o:\"add\") -t:land"});
+  }
+  const gaps = [];
+  if(sig.ramp.length<10) gaps.push(["ramp","Deck is light on ramp"]);
+  if(sig.draw.length<10) gaps.push(["draw","Deck is light on card draw"]);
+  if(sig.interaction.length<8) gaps.push(["interaction","Deck is light on interaction"]);
+  gaps.push(["protection","Protection for your commander and key permanents"]);
+  gaps.forEach(([role,why])=>queries.push({why, q:base+" "+ROLE_Q[role]}));
+  deckThemes().forEach(t=>queries.push({why:"Fits your "+t.label+" theme ("+t.count+" cards already)", q:base+" "+t.q}));
+
+  const cuts = weakestCards();
+  const picked = [], seen = new Set();
+  let ci_ = 0;
+  for(const {why,q} of queries){
+    let results = [];
+    try{ results = await scrySearch(q, 12); }catch(e){}
+    await sleep(110);
+    for(const c of results){
+      const key = norm(c.name);
+      if(have.has(key) || seen.has(key)) continue;
+      if((c.legalities||{}).commander !== "legal") continue;
+      const price = priceOf(c);
+      if(S.budget && price!=null && price > S.budget) continue;
+      seen.add(key);
+      picked.push({card:c, why, price, cut: cuts[ci_++] || "", gameChanger:c.game_changer===true});
+      break;
+    }
+    if(picked.length>=10) break;
+  }
+
+  S.recs = picked;
+  S.recNote = target>current
+    ? "Adds chosen to push toward Bracket "+target+", sorted by how often decks in your colors play them."
+    : target<current
+      ? "To drop to Bracket "+target+", removals matter more than additions — see the reduction list below."
+      : "Chosen by EDHREC popularity within your colors, filtered to your budget and color identity.";
+  if(S.key) await enrichRecommendations();
+}
+
+function reductionPlan(target){
+  const sig = buildSignals(), combos = twoCardCombos();
+  const out = [];
+  if(target<=3 && sig.massLandDenial.length) out.push({what:"Cut all mass land denial", cards:sig.massLandDenial});
+  if(target<=3 && sig.extraTurns.length>1) out.push({what:"Cut extra-turn effects down to one", cards:sig.extraTurns});
+  const cap = target>=4 ? 99 : target===3 ? 3 : 0;
+  if(sig.gameChangers.length>cap)
+    out.push({what:"Cut Game Changers to "+cap, cards:sig.gameChangers.slice(cap)});
+  if(target<=2 && combos.length)
+    out.push({what:"Break up two-card combos", cards:[...new Set(combos.flatMap(c=>c.cards))]});
+  if(target<=3 && combos.some(c=>c.speed==="early"))
+    out.push({what:"Remove early combo pieces", cards:combos.filter(c=>c.speed==="early").flatMap(c=>c.cards)});
+  if(target<=3 && sig.tutors.length>2)
+    out.push({what:"Trim tutors toward “few”", cards:sig.tutors.slice(2)});
+  return out;
+}
+
+/* --------------------------- optional AI -------------------------- */
+async function askClaude(prompt){
+  if(!S.key) throw new Error("No API key set");
+  const res = await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-api-key":S.key,
+      "anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body: JSON.stringify({model:"claude-sonnet-4-6", max_tokens:1200,
+      messages:[{role:"user", content:prompt}]})
+  });
+  if(!res.ok) throw new Error("API error "+res.status);
+  const d = await res.json();
+  const text = (d.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n");
+  const clean = text.replace(/```json|```/g,"").trim();
+  const o=clean.indexOf("{"), a=clean.indexOf("[");
+  const arrFirst = a!==-1 && (o===-1||a<o);
+  const start = arrFirst?a:o, end = arrFirst?clean.lastIndexOf("]"):clean.lastIndexOf("}");
+  return JSON.parse(clean.slice(start,end+1));
+}
+
+function deckPromptList(){
+  return S.deck.filter(e=>!S.commanders.some(c=>norm(c.name)===norm(e.name)))
+    .map(e=>e.name).join("; ");
+}
+
+async function aiCombos(){
+  const known = twoCardCombos().map(c=>c.cards.join(" + ")).join("; ") || "none";
+  const r = await askClaude(`Commander: ${S.commanders.map(c=>c.name).join(" + ")}.
+Decklist: ${deckPromptList()}
+Already identified: ${known}
+List any ADDITIONAL two-card infinite or immediately game-ending combos in this exact list. Empty array if none.
+Respond with ONLY raw JSON: {"combos":[{"cards":["A","B"],"result":"under 10 words","speed":"early|late"}]}`);
+  return r.combos||[];
+}
+
+async function enrichRecommendations(){
+  try{
+    const r = await askClaude(`Commander: ${S.commanders.map(c=>c.name).join(" + ")}.
+Decklist: ${deckPromptList()}
+Candidate additions: ${S.recs.map(x=>x.card.name).join("; ")}
+For each candidate give one specific sentence on what it does for THIS deck.
+Respond with ONLY raw JSON: {"notes":[{"card":"name","why":"one sentence"}]}`);
+    (r.notes||[]).forEach(n=>{
+      const hit = S.recs.find(x=>norm(x.card.name)===norm(n.card));
+      if(hit && n.why) hit.why = n.why;
+    });
+  }catch(e){}
+}
+
+/* ----------------------------- storage ---------------------------- */
+const savedDecks = () => { try{ return JSON.parse(localStorage.getItem("cdl_decks")||"[]"); }catch(e){ return []; } };
+const writeDecks = d => localStorage.setItem("cdl_decks", JSON.stringify(d));
+
+/* ------------------------------ flow ------------------------------ */
+function msg(html){ document.getElementById("messages").innerHTML = html; }
+function busy(t){ msg(t ? '<div class="note busy">'+esc(t)+'</div>' : ""); }
+function err(t){ msg('<div class="note err">'+esc(t)+'</div>'); }
+
+async function loadDeck(text){
+  const entries = parseDecklist(text);
+  if(!entries.length){ err("No cards found. Lines should look like: 1 Sol Ring"); return; }
+  busy("Fetching "+entries.length+" cards from Scryfall…");
+  try{
+    const {map, missing} = await scryCollection(entries.map(e=>e.name),
+      (i,n)=>busy("Fetching cards… "+Math.min(i+70,n)+" of "+n));
+    S.cards = map; S.deck = entries; S.baseline = entries.slice();
+    S.missing = missing; S.ai=null; S.recs=[]; S.staged=[]; S.dirty=false;
+
+    const explicit = entries.filter(e=>e.commander).map(e=>e.name);
+    const legends = entries.filter(e=>{
+      const c=map[norm(e.name)]; if(!c) return false;
+      const t=typeOf(c);
+      return (/legendary/i.test(t)&&/creature/i.test(t)) || /can be your commander/i.test(oracleOf(c));
+    }).map(e=>e.name);
+    S.commanderOptions = legends;
+    S.commanders = (explicit.length?explicit:legends.slice(0,1)).map(n=>map[norm(n)]).filter(Boolean);
+    S.needsCommander = !explicit.length && legends.length>1;
+
+    document.getElementById("inputScreen").classList.add("hidden");
+    document.getElementById("workspace").classList.remove("hidden");
+    S.tab = "bracket";
+    msg(missing.length ? '<div class="note err">Scryfall didn\'t recognize: '+esc(missing.join(", "))+'</div>' : "");
+    render();
+    if(!S.needsCommander) loadCombos();
+  }catch(e){
+    err("Couldn't reach Scryfall: "+e.message+". Check your connection and try again.");
+  }
+}
+
+/* ----------------------------- render ----------------------------- */
+const TABS = [["deck","Deck"],["legality","Legality"],["bracket","Bracket"],["wins","How it wins"],["upgrade","Upgrade"],["saved","Saved"]];
+
+function render(){
+  const leg = checkLegality(), sig = buildSignals();
+  const combos = twoCardCombos();
+  const verdict = assessBracket(sig, combos, S.combos.status);
+
+  document.getElementById("cmdrBox").innerHTML = S.commanders.length
+    ? '<div style="font-family:var(--serif);font-size:13px">'+esc(S.commanders.map(c=>c.name).join(" + "))+'</div>'
+      +'<div class="sub" style="margin:2px 0 0">'+esc(leg.colorIdentity.join(" / ")||"colorless")+'</div>' : "";
+
+  document.getElementById("tabs").innerHTML = TABS.map(([k,l])=>
+    '<button class="'+(S.tab===k?"on":"")+'" data-tab="'+k+'">'+l+'</button>').join("");
+
+  let html = "";
+  if(S.needsCommander) html += commanderPickerHTML();
+  if(S.tab==="bracket")  html += bracketHTML(verdict, sig, combos);
+  if(S.tab==="legality") html += legalityHTML(leg);
+  if(S.tab==="wins")     html += winsHTML(combos);
+  if(S.tab==="upgrade")  html += upgradeHTML(verdict);
+  if(S.tab==="deck")     html += deckHTML(leg);
+  if(S.tab==="saved")    html += savedHTML();
+  document.getElementById("panels").innerHTML = html;
+  document.getElementById("stagedBar").innerHTML = stagedHTML();
+}
+
+function commanderPickerHTML(){
+  return '<div class="panel" style="border-color:var(--gold)"><h2>Which card is your commander?</h2>'
+   +'<div class="sub">Several legendary creatures and no commander marker, so pick before the rating means anything.</div>'
+   +'<select id="cmdrPick" style="width:100%;margin-bottom:10px">'
+   + (S.commanderOptions||[]).map(n=>'<option '+(S.commanders[0]&&norm(S.commanders[0].name)===norm(n)?"selected":"")+'>'+esc(n)+'</option>').join("")
+   +'</select><button class="primary" id="cmdrConfirm">Confirm commander</button></div>';
+}
+
+function bracketHTML(v, sig, combos){
+  const b = BRACKETS[v.bracket-1];
+  let h = '<div class="panel"><h2>Bracket '+v.bracket+' — '+b.name+'</h2><div class="sub">'+b.blurb+'</div>'
+    +'<div class="rail">'+BRACKETS.map(x=>'<div class="'+(x.n===v.bracket?"on":"")+'"><b>'+x.n+'</b><span>'+x.name+'</span></div>').join("")+'</div>'
+    +'<div class="stats">'
+    + stat("Game Changers", v.counts.gc, v.counts.gc>3)
+    + stat("Two-card combos", v.counts.combos, v.comboUnknown)
+    + stat("Tutors", v.counts.tutors)
+    + stat("Land denial", v.counts.mld, v.counts.mld>0)
+    + stat("Extra turns", v.counts.xt)
+    +'</div></div>';
+
+  if(S.combos.status==="error")
+    h += '<div class="banner block">Combo index didn\u2019t load \u2014 <b>'+esc(S.combos.error)+'</b>. This rating only accounts for Game Changers, tutors, land denial, and extra turns; a combo could push it higher. '
+      + '<button class="small" id="retryCombos">Retry</button> <button class="small" id="diagBtn">Diagnose</button></div>';
+  if(S.combos.status==="loading")
+    h += '<div class="banner">Checking Commander Spellbook for combos — the rating may move when it lands.</div>';
+  h += '<div class="panel"><h2>What sets the floor</h2><div class="sub">Remove these and the deck drops to a lower bracket.</div>';
+  h += v.blocking.length ? v.blocking.map(d=>'<div style="padding:7px 0;border-top:1px solid var(--line)"><span class="gc" style="font-family:var(--serif)">→ '+d.to+'</span> '+esc(d.why)+'</div>').join("")
+    : '<div class="sub">Nothing forces the deck upward. It sits where its speed and consistency put it.</div>';
+  h += '</div>';
+
+  if(sig.gameChangers.length) h += '<div class="panel"><h2>Game Changers in this deck</h2><div class="sub">Straight from Scryfall’s official tag.</div>'
+    + sig.gameChangers.map(n=>'<div class="card-row" data-card="'+esc(n)+'"><span>'+esc(n)+'</span><span class="sub" style="margin:0">'+money(priceOf(S.cards[norm(n)]))+'</span></div>').join("")+'</div>';
+
+  h += '<div class="panel"><h2>Deck shape</h2><div class="sub">From real card text, so these counts are dependable.</div><div class="stats">'
+    + stat("Lands", sig.lands) + stat("Ramp", sig.ramp.length) + stat("Card draw", sig.draw.length)
+    + stat("Interaction", sig.interaction.length) + stat("Avg mana value", sig.avgCmc.toFixed(2))
+    + stat("Deck value", money(sig.totalValue)) + '</div></div>';
+  return h;
+}
+const stat = (label,val,warn) => '<div class="stat'+(warn?" warn":"")+'"><b>'+esc(val)+'</b><span>'+label+'</span></div>';
+
+function legalityHTML(leg){
+  let h = '<div class="panel"><h2>'+(leg.errors.length?leg.errors.length+" problem"+(leg.errors.length>1?"s":""):"Legal for Commander")+'</h2>'
+    +'<div class="sub">'+leg.total+' cards · identity '+(leg.colorIdentity.join("/")||"colorless")+'</div>';
+  if(!leg.errors.length && !leg.warnings.length)
+    h += '<div style="color:var(--good)">100 cards, singleton, every card inside your commander’s color identity, nothing banned.</div>';
+  h += leg.errors.map(e=>'<div style="color:var(--bad);padding:4px 0">'+esc(e)+'</div>').join("");
+  h += leg.warnings.map(w=>'<div style="color:var(--warn);padding:4px 0">'+esc(w)+'</div>').join("");
+  h += '</div><div class="panel"><h2>Commander</h2><div class="sub">Change this if the wrong card was picked up.</div>'
+    +'<select id="cmdrSwap" style="width:100%">'
+    + (S.commanderOptions||S.deck.map(e=>e.name)).map(n=>'<option '+(S.commanders[0]&&norm(S.commanders[0].name)===norm(n)?"selected":"")+'>'+esc(n)+'</option>').join("")
+    +'</select></div>';
+  return h;
+}
+
+function comboStatusLine(){
+  const s = S.combos.status;
+  if(s==="loading") return '<div class="sub">Loading combo index…</div>';
+  if(s==="error") return '<div class="banner block">Combo check unavailable — '+esc(S.combos.error)
+    +'. Treat the combo count as unknown rather than zero. <button class="small" id="retryCombos">Retry</button></div>';
+  if(s==="idle") return '<div class="sub">Combos not checked yet.</div>';
+  return "";
+}
+
+function winsHTML(combos){
+  const wins = (S.ai && S.ai.winConditions && S.ai.winConditions.length) ? S.ai.winConditions : deriveWinConditions(combos);
+  const all = allCombos();
+  let h = '<div class="panel"><div class="between"><h2>Combos</h2>'
+    + (S.combos.status==="ok" ? '<span class="sub" style="margin:0">'+all.length+' found</span>' : '')
+    + '</div><div class="sub">From Commander Spellbook\u2019s curated database — the same source EDHREC and Moxfield use.'
+    + (S.combos.generated ? ' Index of '+S.combos.dbSize.toLocaleString()+' combos, refreshed '+esc(String(S.combos.generated).slice(0,10))+'.' : '')
+    + '</div>'
+    + comboStatusLine();
+  if(S.combos.status==="ok"){
+    h += all.length ? all.map(c=>'<div style="padding:8px 0;border-top:1px solid var(--line)">'
+        +'<div>'+esc(c.cards.join(" + "))+(c.cards.length===2?'':' <span class="sub">('+c.cards.length+' cards)</span>')+'</div>'
+        +'<div class="sub" style="margin:2px 0 0">'+esc(c.result||"combo")+' · '+esc(c.speed)+' game'
+        + (c.needsExtra?' · needs one more role card (sac outlet, token maker, etc.)':'')
+        + (c.source==="ai"?' · found by Claude, not in the database':'')
+        + (c.permalink?' · <a href="'+c.permalink+'" target="_blank" rel="noopener">details</a>':'')+'</div></div>').join("")
+      : '<div class="sub">No known combos in this list.</div>';
+  }
+  h += '</div>';
+
+  const near = S.combos.status==="ok" ? nearMisses() : [];
+  if(near.length){
+    h += '<div class="panel"><h2>One card away</h2>'
+      +'<div class="sub">Each of these completes a combo already half-built in your deck, and is legal in your colors. Tap to inspect or add.</div>'
+      + near.map(x=>'<div class="card-row" data-card="'+esc(x.name)+'">'
+        +'<span>'+esc(x.name)+'<br><span class="sub" style="margin:0">with '
+        + esc(x.combo.cards.filter(n=>norm(n)!==norm(x.name)).join(" + "))+'</span></span>'
+        +'<span class="sub" style="margin:0">'+money(priceOf(x.card))+'</span></div>').join("")
+      +'</div>';
+  }
+
+  h += wins.map(w=>'<div class="panel"><div class="between"><h2>'+esc(w.name)+'</h2>'
+    +'<span class="sub" style="margin:0">'+esc(w.reliability)+'</span></div>'
+    +'<div style="margin-top:6px">'+esc(w.how)+'</div>'
+    +'<div class="sub" style="margin-top:8px">'+esc((w.keyCards||[]).join(" · "))+'</div></div>').join("");
+  if(!wins.length) h += '<div class="panel"><div class="sub">Not enough of a pattern to call. Add more of a single theme and this fills in.</div></div>';
+  if(S.key) h += '<div class="panel"><button id="aiCombo">Ask Claude for combos Commander Spellbook may not list</button></div>';
+  return h;
+}
+
+function upgradeHTML(v){
+  const target = S.target || 0;
+  let h = '<div class="panel"><h2>Find upgrades</h2>'
+    +'<div class="sub">Candidates come from Scryfall, ranked by how often decks in your colors play them. Color identity, legality, singleton, and your price cap are all enforced before anything appears.</div>'
+    +'<div class="row"><label><span class="lbl">Target bracket</span><select id="targetSel">'
+    +'<option value="0">Stay where I am</option>'
+    + BRACKETS.map(b=>'<option value="'+b.n+'" '+(target===b.n?"selected":"")+'>'+b.n+' — '+b.name+'</option>').join("")
+    +'</select></label>'
+    +'<label><span class="lbl">Max per card</span><input id="budgetInp" type="number" min="0" value="'+S.budget+'" style="width:100px"></label>'
+    +'</div><div class="row" style="margin-top:12px"><button class="primary" id="recBtn">'
+    + (target?("Get swaps for Bracket "+target):"Get upgrade suggestions") +'</button></div>';
+  if(S.recNote) h += '<div class="sub" style="margin-top:10px">'+esc(S.recNote)+'</div>';
+  h += '</div>';
+
+  if(target && target < v.bracket){
+    const plan = reductionPlan(target);
+    h += '<div class="panel"><h2>To reach Bracket '+target+'</h2><div class="sub">Getting lower is about removal, not additions.</div>'
+      + plan.map(p=>'<div style="padding:7px 0;border-top:1px solid var(--line)"><div>'+esc(p.what)+'</div>'
+        +'<div class="sub" style="margin:2px 0 0">'+esc(p.cards.join(", "))+'</div></div>').join("")
+      + (plan.length?"":'<div class="sub">Nothing structural is holding it up — the deck is simply fast.</div>')+'</div>';
+  }
+
+  h += S.recs.map(r=>{
+    const on = S.staged.some(s=>norm(s.add)===norm(r.card.name));
+    const cut = (S.staged.find(s=>norm(s.add)===norm(r.card.name))||{}).cut || r.cut || "";
+    return '<div class="panel" style="'+(on?"border-color:var(--gold)":"")+'">'
+      +'<div class="between"><h2 class="card-link" data-card="'+esc(r.card.name)+'" style="cursor:pointer">'+esc(r.card.name)+'</h2>'
+      +'<span class="sub" style="margin:0;white-space:nowrap">'+money(r.price)+'</span></div>'
+      +'<div class="sub" style="margin:2px 0 0">'+esc(typeOf(r.card).split("//")[0])
+      + (r.gameChanger?' · <span class="gc">Game Changer</span>':'')
+      + (r.card.edhrec_rank?' · EDHREC #'+r.card.edhrec_rank:'')+'</div>'
+      +'<div style="margin-top:8px">'+esc(r.why)+'</div>'
+      +'<div class="row" style="margin-top:10px"><span class="sub" style="margin:0">in place of</span>'
+      +'<select class="cutSel" data-add="'+esc(r.card.name)+'"><option value="">choose a cut</option>'
+      + S.deck.filter(e=>!S.commanders.some(c=>norm(c.name)===norm(e.name)))
+          .map(e=>'<option '+(norm(e.name)===norm(cut)?"selected":"")+'>'+esc(e.name)+'</option>').join("")
+      +'</select>'
+      +'<button class="small '+(on?"danger":"")+'" data-stage="'+esc(r.card.name)+'">'+(on?"Unstage":"Stage swap")+'</button></div></div>';
+  }).join("");
+  return h;
+}
+
+function deckHTML(leg){
+  const rows = S.deck.map(e=>{
+    const c = S.cards[norm(e.name)];
+    return '<div class="card-row" data-card="'+esc(e.name)+'"><span>'+e.qty+' '+esc(e.name)
+      + (S.commanders.some(x=>norm(x.name)===norm(e.name))?' <span class="gc">· commander</span>':'')
+      + (c&&c.game_changer?' <span class="gc">· GC</span>':'')
+      +'</span><span class="sub" style="margin:0">'+money(priceOf(c))+'</span></div>';
+  }).join("");
+  return '<div class="panel"><div class="between"><h2>Decklist</h2>'
+    +'<span class="sub" style="margin:0">'+leg.total+' cards</span></div>'
+    +'<div class="sub">Tap any card for full Scryfall detail.</div>'+rows+'</div>'
+    +'<div class="panel"><h2>Look up a card</h2><div class="row">'
+    +'<input id="lookupInp" placeholder="Card name" style="flex:1;min-width:160px">'
+    +'<button id="lookupBtn">Search</button></div></div>';
+}
+
+function savedHTML(){
+  const d = savedDecks();
+  return '<div class="panel"><h2>Saved decks</h2>'
+    + (d.length ? d.map((s,i)=>'<div class="between" style="padding:8px 0;border-top:1px solid var(--line)">'
+        +'<div><div>'+esc(s.name)+'</div><div class="sub" style="margin:0">Bracket '+esc(s.bracket)+' · '+new Date(s.savedAt).toLocaleDateString()+'</div></div>'
+        +'<div class="row"><button class="small" data-open="'+i+'">Open</button>'
+        +'<button class="small danger" data-del="'+i+'">Delete</button></div></div>').join("")
+      : '<div class="sub">Nothing saved yet.</div>')
+    + '<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">'
+    + '<button id="newDeck">Start a new deck</button> <button id="settingsBtn2">Settings</button></div></div>';
+}
+
+function stagedHTML(){
+  if(S.staged.length){
+    const total = S.staged.reduce((s,x)=>s+(x.price||0),0);
+    const ready = S.staged.every(s=>s.cut);
+    return '<div class="bar"><div style="margin-bottom:8px">'+S.staged.length+' swap'+(S.staged.length>1?"s":"")+' staged · '+money(total)
+      + (ready?"":' <span style="color:var(--warn)">· pick a cut for every swap</span>')+'</div>'
+      +'<div class="row"><button class="primary" id="applyBtn" '+(ready?"":"disabled")+'>Apply swaps</button>'
+      +'<button id="clearBtn">Clear staged</button></div></div>';
+  }
+  if(S.dirty){
+    return '<div class="bar"><div style="margin-bottom:8px">Deck edited. Save it as a new deck or drop the changes.</div>'
+      +'<div class="row"><input id="saveName" placeholder="New deck name" style="width:170px">'
+      +'<button class="primary" id="saveBtn">Save as new deck</button>'
+      +'<button class="danger" id="discardBtn">Discard changes</button></div></div>';
+  }
+  return "";
+}
+
+/* ---------------------------- card modal -------------------------- */
+async function showCard(name){
+  const host = document.getElementById("modalHost");
+  host.innerHTML = '<div class="modal"><div class="inner"><div class="sub">Loading '+esc(name)+'…</div></div></div>';
+  let c = S.cards[norm(name)];
+  try{ if(!c) c = await scryNamed(name); }catch(e){
+    host.innerHTML = '<div class="modal"><div class="inner"><div class="note err">'+esc(e.message)+'</div>'
+      +'<button id="closeModal">Close</button></div></div>';
+    document.getElementById("closeModal").onclick = ()=>host.innerHTML="";
+    return;
+  }
+  const img = imgOf(c);
+  const inDeck = S.deck.some(e=>norm(e.name)===norm(c.name));
+  host.innerHTML = '<div class="modal"><div class="inner">'
+    + (img ? '<img src="'+img+'" alt="'+esc(c.name)+'">' : '')
+    + '<div class="between"><h2>'+esc(c.name)+'</h2><span class="sub" style="margin:0">'+money(priceOf(c))+'</span></div>'
+    + '<div class="sub">'+esc(typeOf(c))+' · mv '+(c.cmc!=null?c.cmc:"—")
+    + ' · identity '+((c.color_identity||[]).join("/")||"colorless")
+    + (c.edhrec_rank?' · EDHREC #'+c.edhrec_rank:'')+'</div>'
+    + (c.game_changer?'<div class="gc" style="font-size:12.5px">On the Commander Game Changers list</div>':'')
+    + '<div class="sub">Commander legality: '+esc((c.legalities||{}).commander||"unknown")+'</div>'
+    + '<div class="oracle">'+esc(oracleOf(c))+'</div>'
+    + '<div class="row" style="margin-top:12px">'
+    + (inDeck?'':'<button class="primary" id="addCard">Add to deck</button>')
+    + '<a href="'+(c.scryfall_uri||"#")+'" target="_blank" rel="noopener"><button>Open on Scryfall</button></a>'
+    + '<button id="closeModal">Close</button></div></div></div>';
+  document.getElementById("closeModal").onclick = ()=>host.innerHTML="";
+  const add = document.getElementById("addCard");
+  if(add) add.onclick = ()=>{
+    S.cards[norm(c.name)] = c;
+    S.staged.push({add:c.name, cut:"", price:priceOf(c)});
+    S.recs = S.recs.concat([{card:c, why:"Added manually from card lookup.", price:priceOf(c),
+      cut:(weakestCards()[0]||""), gameChanger:c.game_changer===true}]);
+    host.innerHTML=""; S.tab="upgrade"; render();
+  };
+}
+
+/* ---------------------------- settings ---------------------------- */
+function showSettings(){
+  const host = document.getElementById("modalHost");
+  host.innerHTML = '<div class="modal"><div class="inner"><h2>Settings</h2>'
+    +'<div class="sub">Everything above works without a key: card data, legality, bracket rating, the built-in combo list, and Scryfall-ranked recommendations. An Anthropic API key adds combo detection beyond the built-in list and rewrites the reason lines for your specific deck.</div>'
+    +'<span class="lbl">Anthropic API key (stored in this browser only)</span>'
+    +'<input id="keyInp" type="password" placeholder="sk-ant-…" value="'+esc(S.key)+'" style="width:100%">'
+    +'<div class="row" style="margin-top:12px"><button class="primary" id="keySave">Save</button>'
+    +'<button id="keyClear">Clear key</button><button id="closeModal2">Close</button></div>'
+    +'<div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">'
+    +'<button id="diagBtn">Run combo API diagnostics</button></div></div></div>';
+  document.getElementById("closeModal2").onclick = ()=>host.innerHTML="";
+  document.getElementById("keySave").onclick = ()=>{
+    S.key = document.getElementById("keyInp").value.trim();
+    localStorage.setItem("cdl_key", S.key); host.innerHTML=""; render();
+  };
+  document.getElementById("keyClear").onclick = ()=>{
+    S.key=""; localStorage.removeItem("cdl_key"); host.innerHTML=""; render();
+  };
+}
+
+/* ----------------------------- events ----------------------------- */
+document.addEventListener("click", async ev=>{
+  const t = ev.target.closest("button, .card-row, .card-link");
+  if(!t) return;
+
+  if(t.id==="analyzeBtn"){ loadDeck(document.getElementById("deckInput").value); return; }
+  if(t.id==="settingsBtn"||t.id==="settingsBtn2"){ showSettings(); return; }
+  if(t.dataset && t.dataset.tab){ S.tab=t.dataset.tab; render(); return; }
+  if(t.dataset && t.dataset.card){ showCard(t.dataset.card); return; }
+
+  if(t.id==="cmdrConfirm"){
+    const n = document.getElementById("cmdrPick").value;
+    S.commanders = [S.cards[norm(n)]].filter(Boolean); S.needsCommander=false; render(); loadCombos(); return;
+  }
+  if(t.id==="lookupBtn"){
+    const v = document.getElementById("lookupInp").value.trim();
+    if(v) showCard(v);
+    return;
+  }
+  if(t.dataset && t.dataset.stage){
+    const name = t.dataset.stage;
+    const i = S.staged.findIndex(s=>norm(s.add)===norm(name));
+    if(i>=0) S.staged.splice(i,1);
+    else {
+      const rec = S.recs.find(r=>norm(r.card.name)===norm(name));
+      S.staged.push({add:name, cut:(rec&&rec.cut)||"", price:rec?rec.price:null});
+    }
+    render(); return;
+  }
+  if(t.id==="clearBtn"){ S.staged=[]; render(); return; }
+  if(t.id==="applyBtn"){
+    busy("Applying swaps…");
+    try{
+      const {map} = await scryCollection(S.staged.map(s=>s.add));
+      Object.assign(S.cards, map);
+      S.staged.forEach(s=>{
+        S.deck = S.deck.filter(e=>norm(e.name)!==norm(s.cut));
+        const real = map[norm(s.add)];
+        S.deck.push({qty:1, name: real?real.name:s.add, commander:false});
+      });
+      S.staged=[]; S.recs=[]; S.ai=null; S.dirty=true; S.tab="bracket"; msg(""); render(); loadCombos();
+    }catch(e){ err("Couldn't apply swaps: "+e.message); }
+    return;
+  }
+  if(t.id==="discardBtn"){ S.deck=S.baseline.slice(); S.staged=[]; S.recs=[]; S.ai=null; S.dirty=false; render(); loadCombos(); return; }
+  if(t.id==="saveBtn"){
+    const sig=buildSignals(), v=assessBracket(sig,twoCardCombos(),S.combos.status);
+    const nameInput = document.getElementById("saveName");
+    const name = (nameInput && nameInput.value.trim()) ||
+      ((S.commanders[0]?S.commanders[0].name:"Untitled")+" — Bracket "+v.bracket);
+    const list = savedDecks();
+    list.push({name, savedAt:new Date().toISOString(), bracket:v.bracket,
+      list:S.deck.map(e=>e.qty+" "+e.name+(S.commanders.some(c=>norm(c.name)===norm(e.name))?" *CMDR*":"")).join("\n")});
+    writeDecks(list); S.baseline=S.deck.slice(); S.dirty=false; S.tab="saved"; render(); return;
+  }
+  if(t.dataset && t.dataset.open!==undefined && t.dataset.open!==""){
+    const d = savedDecks()[Number(t.dataset.open)]; if(d) loadDeck(d.list); return;
+  }
+  if(t.dataset && t.dataset.del!==undefined && t.dataset.del!==""){
+    const list = savedDecks(); list.splice(Number(t.dataset.del),1); writeDecks(list); render(); return;
+  }
+  if(t.id==="newDeck"){
+    document.getElementById("workspace").classList.add("hidden");
+    document.getElementById("inputScreen").classList.remove("hidden");
+    document.getElementById("deckInput").value=""; msg(""); return;
+  }
+  if(t.id==="retryCombos"){ loadCombos(); return; }
+  if(t.id==="diagBtn"){
+    busy("Testing the Commander Spellbook endpoints…");
+    const lines = await comboDiagnose(); msg(""); showDiagnostics(lines); return;
+  }
+  if(t.id==="recBtn"){
+    busy("Searching Scryfall for candidates…");
+    try{ await buildRecommendations(); msg(""); render(); }
+    catch(e){ err("Recommendation search failed: "+e.message); }
+    return;
+  }
+  if(t.id==="aiCombo"){
+    busy("Asking Claude…");
+    try{ const extra = await aiCombos(); S.ai = Object.assign({}, S.ai, {combos:extra}); msg(""); render(); }
+    catch(e){ err("AI lookup failed: "+e.message); }
+    return;
+  }
+});
+
+document.addEventListener("change", ev=>{
+  const el = ev.target;
+  if(el.id==="targetSel"){ S.target = Number(el.value); render(); }
+  if(el.id==="budgetInp"){ S.budget = Number(el.value)||0; }
+  if(el.id==="cmdrSwap"){ S.commanders = [S.cards[norm(el.value)]].filter(Boolean); S.ai=null; render(); loadCombos(); }
+  if(el.classList.contains("cutSel")){
+    const add = el.dataset.add;
+    const st = S.staged.find(s=>norm(s.add)===norm(add));
+    if(st) st.cut = el.value;
+    const rec = S.recs.find(r=>norm(r.card.name)===norm(add));
+    if(rec) rec.cut = el.value;
+    render();
+  }
+});
+
+
+/* ------------------- startup: connectivity + install ---------------- */
+function bootBanner(html, cls){
+  const host = document.getElementById("boot");
+  if(host) host.innerHTML = '<div class="banner '+cls+'">'+html+'</div>';
+}
+
+(async function boot(){
+  const standalone = window.navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  try{
+    const r = await fetch(SCRY+"/cards/named?exact=Sol+Ring");
+    if(!r.ok) throw new Error("status "+r.status);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if(isIOS && !standalone && location.protocol.startsWith("http")){
+      bootBanner("Scryfall connected. Tap <b>Share &rarr; Add to Home Screen</b> to keep this as an app icon.","ok");
+    } else {
+      bootBanner("Scryfall connected \u2014 live card data, prices, and Game Changer tags.","ok");
+    }
+  }catch(e){
+    bootBanner("<b>No Scryfall access here.</b> This page is running somewhere that blocks outside network requests \u2014 usually an in-app preview. Open the hosted URL in Safari or Chrome instead and everything below works.","block");
+  }
+})();
+
+document.getElementById("savedList").innerHTML =
+  savedDecks().length ? '<div class="sub" style="margin-top:12px">'+savedDecks().length+' saved deck(s) — open them from the Saved tab after loading any list.</div>' : "";
+</script>
+</body>
+</html>
