@@ -78,7 +78,7 @@
   <div class="between" style="margin-bottom:14px">
     <div>
       <h1>Commander Deck Lab</h1>
-      <div class="sub" style="margin:2px 0 0">Legality, bracket, win paths, and upgrades — live Scryfall data</div><div class="sub" style="margin:2px 0 0;color:var(--gold);font-size:11px">build 11 · ramp/interaction detection fix</div>
+      <div class="sub" style="margin:2px 0 0">Legality, bracket, win paths, and upgrades — live Scryfall data</div><div class="sub" style="margin:2px 0 0;color:var(--gold);font-size:11px">build 12 · EDHREC synergy + ramp fix</div>
     </div>
     <div id="cmdrBox" style="text-align:right"></div>
   </div>
@@ -508,6 +508,36 @@ function deriveWinConditions(combos){
   return out.sort((a,b)=>order[a.reliability]-order[b.reliability]).slice(0,5);
 }
 
+/* ------------------- commander-specific data ------------------------
+   EDHREC's synergy score says how much more often a card appears in THIS
+   commander's decks than in decks generally. That is the difference between
+   "good card" and "good card here" — text matching cannot see it. A workflow
+   commits the data; we read it same-origin. */
+function slugify(n){
+  return (n||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9\s-]/g,"").replace(/\s+/g,"-").replace(/^-+|-+$/g,"");
+}
+
+async function loadEdhrec(){
+  const slug = slugify(S.commanders.map(c=>c.name).join(" "));
+  S.edhrecSlug = slug;
+  S.edhrec = null;
+  if(!slug){ S.edhrecStatus = "none"; return; }
+  try{
+    const r = await fetch(new URL("edhrec/"+slug+".json", location.href).href, {cache:"no-cache"});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const d = await r.json();
+    S.edhrec = {
+      generated: d.generated, commander: d.commander,
+      cards: (d.cards||[]).map(row=>({name:row[0], synergy:row[1], decks:row[2], list:row[3]}))
+    };
+    S.edhrecStatus = "ok";
+  }catch(e){
+    S.edhrecStatus = "missing";
+  }
+  render();
+}
+
 /* ------------------- recommendations via Scryfall ------------------ */
 const THEMES = [
   ["+1/+1 counters",'o:"+1/+1 counter"', /\+1\/\+1 counter/i],
@@ -537,6 +567,18 @@ function deckThemes(){
 }
 
 function weakestCards(exclude){
+  if(S.edhrec){
+    const decks = new Map(S.edhrec.cards.map(c=>[norm(c.name), c.decks||0]));
+    const cmdr = new Set(S.commanders.map(c=>norm(c.name)));
+    return S.deck.map(e=>S.cards[norm(e.name)]).filter(Boolean)
+      .filter(c=>!isLand(c) && !cmdr.has(norm(c.name)) && !(exclude||new Set()).has(norm(c.name)))
+      .map(c=>({c, score: decks.has(norm(c.name)) ? decks.get(norm(c.name)) : -1}))
+      .sort((a,b)=>a.score-b.score).map(x=>x.c.name);
+  }
+  return weakestCardsByText(exclude);
+}
+
+function weakestCardsByText(exclude){
   const cmdr = new Set(S.commanders.map(c=>norm(c.name)));
   const themeRes = deckThemes().map(t=>THEMES.find(x=>x[0]===t.label)[2]);
   return S.deck.map(e=>S.cards[norm(e.name)]).filter(Boolean)
@@ -600,6 +642,34 @@ function comboCompletions(leg){
   return out.sort((a,b)=>(a.card.edhrec_rank||99999)-(b.card.edhrec_rank||99999));
 }
 
+async function edhrecPicks(leg, target, current){
+  const inDeck = new Set(S.deck.map(e=>norm(e.name)));
+  const ciSet = new Set(leg.colorIdentity);
+  const pool = S.edhrec.cards.filter(c=>!inDeck.has(norm(c.name))).slice(0, 140);
+  const names = pool.map(c=>c.name).filter(n=>!S.cards[norm(n)]);
+  if(names.length){
+    try{ const {map} = await scryCollection(names); Object.assign(S.cards, map); }catch(e){}
+  }
+  const out = [];
+  pool.forEach(entry=>{
+    const card = S.cards[norm(entry.name)];
+    if(!card) return;
+    if((card.legalities||{}).commander !== "legal") return;
+    if((card.color_identity||[]).some(x=>!ciSet.has(x))) return;
+    const price = priceOf(card);
+    if(S.budget && price!=null && price > S.budget) return;
+    const syn = typeof entry.synergy === "number" ? entry.synergy : null;
+    const bits = [];
+    if(syn!=null) bits.push("synergy "+(syn>0?"+":"")+syn.toFixed(2));
+    if(entry.decks) bits.push("in "+entry.decks.toLocaleString()+" tracked decks");
+    if(entry.list) bits.push(entry.list.toLowerCase());
+    out.push({card, price, gameChanger:card.game_changer===true,
+      synergy: syn==null ? -99 : syn,
+      why:"Played with "+(S.edhrec.commander||"this commander")+" — "+bits.join(", ")});
+  });
+  return out;
+}
+
 async function buildRecommendations(){
   const leg = checkLegality();
   const ci = leg.colorIdentity.length ? "id<="+leg.colorIdentity.join("").toLowerCase() : "id<=c";
@@ -607,64 +677,70 @@ async function buildRecommendations(){
   const current = assessBracket(sig, twoCardCombos(), S.combos.status).bracket;
   const target = S.target || current;
   const budget = S.budget ? " usd<="+S.budget : "";
-  const capGC = target<=3 && sig.gameChangers.length>=(target===3?3:1);
-  const base = "legal:commander -t:basic "+ci+budget+(capGC?" -is:gamechanger":"");
   const have = new Set(S.deck.map(e=>norm(e.name)));
   const typeCounts = deckTypeCounts();
   const picked = [], seen = new Set(), rejected = [];
+  const take = x => { if(!seen.has(norm(x.card.name))){ seen.add(norm(x.card.name)); picked.push(x); } };
 
-  // combo completions first — deck-specific and directly bracket-relevant
-  if(target>current){
-    comboCompletions(leg).slice(0,4).forEach(x=>{ seen.add(norm(x.card.name)); picked.push(x); });
-  }
+  // 1. completing a combo is the most bracket-relevant add there is
+  if(target>current) comboCompletions(leg).slice(0,4).forEach(take);
 
-  const queries = [];
-  if(target>current){
-    // raising a bracket is about power, not curve filler
-    queries.push({why:"A Game Changer in your colors — three is the Bracket 3 ceiling", q:"legal:commander "+ci+budget+" is:gamechanger"});
-    queries.push({why:"Fast mana, which is what makes a deck play a bracket higher", q:base+' mv<=2 (o:"add two" or o:"add three" or o:"add {c}{c}") -t:land'});
-    queries.push({why:"An efficient tutor to find your best line more often", q:base+' mv<=3 o:"search your library for a card"'});
-    queries.push({why:"Free or near-free interaction to protect the win", q:base+' (o:"without paying its mana cost" or mv<=2) o:"counter target spell"'});
-    queries.push({why:"A finisher that ends the game on its own", q:base+' (o:"you win the game" or o:"loses the game" or o:"infinite")'});
-  } else {
-    const gaps = [];
-    if(sig.ramp.length<10) gaps.push(["ramp","Deck is light on ramp"]);
-    if(sig.draw.length<10) gaps.push(["draw","Deck is light on card draw"]);
-    if(sig.interaction.length<8) gaps.push(["interaction","Deck is light on interaction"]);
-    gaps.push(["protection","Protection for your commander and key permanents"]);
-    gaps.forEach(([role,why])=>queries.push({why, q:base+" "+ROLE_Q[role]}));
-    deckThemes().forEach(t=>queries.push({why:"Fits your "+t.label+" theme ("+t.count+" cards already)", q:base+" "+t.q}));
-  }
-
-  for(const {why,q} of queries){
-    let results = [];
-    try{ results = await scrySearch(q, 15); }catch(e){}
-    await sleep(110);
-    for(const c of results){
-      const key = norm(c.name);
-      if(have.has(key) || seen.has(key)) continue;
-      if((c.legalities||{}).commander !== "legal") continue;
-      const price = priceOf(c);
-      if(S.budget && price!=null && price > S.budget) continue;
-      const bad = offTheme(c, typeCounts, sig.avgCmc);
-      if(bad){ rejected.push(c.name+" — "+bad); continue; }
-      seen.add(key);
-      picked.push({card:c, why, price, gameChanger:c.game_changer===true});
-      break;
+  // 2. cards this commander's decks actually play, ranked by synergy
+  if(S.edhrec){
+    const picks = await edhrecPicks(leg, target, current);
+    picks.sort((a,b)=>b.synergy-a.synergy);
+    if(target>current){
+      picks.filter(p=>p.gameChanger).slice(0,3).forEach(take);
     }
-    if(picked.length>=10) break;
+    picks.slice(0, 14).forEach(p=>{ if(picked.length<10) take(p); });
+  }
+
+  // 3. only fall back to text search when there's no commander data
+  if(!S.edhrec){
+    const capGC = target<=3 && sig.gameChangers.length>=(target===3?3:1);
+    const base = "legal:commander -t:basic "+ci+budget+(capGC?" -is:gamechanger":"");
+    const queries = [];
+    if(target>current){
+      queries.push({why:"A Game Changer in your colors", q:"legal:commander "+ci+budget+" is:gamechanger"});
+      queries.push({why:"Fast mana, which is what makes a deck play a bracket higher", q:base+' mv<=2 (o:"add two" or o:"add three") -t:land'});
+      queries.push({why:"An efficient tutor", q:base+' mv<=3 o:"search your library for a card"'});
+    } else {
+      if(sig.ramp.length<10) queries.push({why:"Deck is light on ramp", q:base+" "+ROLE_Q.ramp});
+      if(sig.draw.length<10) queries.push({why:"Deck is light on card draw", q:base+" "+ROLE_Q.draw});
+      if(sig.interaction.length<8) queries.push({why:"Deck is light on interaction", q:base+" "+ROLE_Q.interaction});
+      deckThemes().forEach(t=>queries.push({why:"Fits your "+t.label+" theme ("+t.count+" cards already)", q:base+" "+t.q}));
+    }
+    for(const {why,q} of queries){
+      let results = [];
+      try{ results = await scrySearch(q, 15); }catch(e){}
+      await sleep(110);
+      for(const c of results){
+        const key = norm(c.name);
+        if(have.has(key) || seen.has(key)) continue;
+        if((c.legalities||{}).commander !== "legal") continue;
+        const price = priceOf(c);
+        if(S.budget && price!=null && price > S.budget) continue;
+        const bad = offTheme(c, typeCounts, sig.avgCmc);
+        if(bad){ rejected.push(c.name+" — "+bad); continue; }
+        take({card:c, why, price, gameChanger:c.game_changer===true});
+        break;
+      }
+      if(picked.length>=10) break;
+    }
   }
 
   const cuts = weakestCards();
   picked.forEach((p,i)=>{ if(!p.cut) p.cut = cuts[i] || ""; });
 
-  S.recs = picked;
+  S.recs = picked.slice(0,10);
   S.rejected = rejected.slice(0,8);
-  S.recNote = target>current
-    ? "Aimed at Bracket "+target+": combo completions first, then Game Changers, fast mana, tutors, and free interaction. Curve filler doesn't move a deck between brackets."
-    : target<current
-      ? "To drop to Bracket "+target+", removals matter more than additions — see the reduction list below."
-      : "Chosen by how often decks in your colors play them, filtered to your budget, color identity, and your deck's creature types.";
+  S.recNote = S.edhrec
+    ? (target>current
+        ? "Combo completions and Game Changers first, then the cards " + (S.edhrec.commander||"this commander") + " decks run most distinctively. Cuts are the cards those decks run least."
+        : "Ranked by EDHREC synergy for " + (S.edhrec.commander||"this commander") + " — how much more often a card shows up here than in decks generally, so staples everyone plays rank low.")
+    : (target<current
+        ? "To drop to Bracket "+target+", removals matter more than additions — see the reduction list below."
+        : "No commander data yet, so these come from card text and general popularity. Run the Fetch commander data workflow for better suggestions.");
   if(S.key) await enrichRecommendations();
 }
 
@@ -768,7 +844,7 @@ async function loadDeck(text){
     S.tab = "bracket";
     msg(missing.length ? '<div class="note err">Scryfall didn\'t recognize: '+esc(missing.join(", "))+'</div>' : "");
     render();
-    if(!S.needsCommander) loadCombos();
+    if(!S.needsCommander){ loadCombos(); loadEdhrec(); }
   }catch(e){
     err("Couldn't reach Scryfall: "+e.message+". Check your connection and try again.");
   }
@@ -925,6 +1001,9 @@ function upgradeHTML(v){
     +'<label><span class="lbl">Max per card</span><input id="budgetInp" type="number" min="0" value="'+S.budget+'" style="width:100px"></label>'
     +'</div><div class="row" style="margin-top:12px"><button class="primary" id="recBtn">'
     + (target?("Get swaps for Bracket "+target):"Get upgrade suggestions") +'</button></div>';
+  h += S.edhrec
+    ? '<div class="sub" style="margin-top:10px;color:var(--good)">Using EDHREC data for '+esc(S.edhrec.commander||"")+', pulled '+esc(String(S.edhrec.generated||"").slice(0,10))+'.</div>'
+    : '<div class="banner" style="margin-top:10px">No EDHREC data for this commander yet. Actions tab \u2192 <b>Fetch commander data</b> \u2192 Run workflow \u2192 enter <b>'+esc(S.commanders[0]?S.commanders[0].name:"")+'</b>. Suggestions stay generic until then.</div>';
   if(S.recNote) h += '<div class="sub" style="margin-top:10px">'+esc(S.recNote)+'</div>';
   if(S.rejected && S.rejected.length)
     h += '<div class="sub" style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">Filtered out as off-strategy: '
@@ -1075,7 +1154,7 @@ document.addEventListener("click", async ev=>{
 
   if(t.id==="cmdrConfirm"){
     const n = document.getElementById("cmdrPick").value;
-    S.commanders = [S.cards[norm(n)]].filter(Boolean); S.needsCommander=false; render(); loadCombos(); return;
+    S.commanders = [S.cards[norm(n)]].filter(Boolean); S.needsCommander=false; render(); loadCombos(); loadEdhrec(); return;
   }
   if(t.id==="lookupBtn"){
     const v = document.getElementById("lookupInp").value.trim();
@@ -1153,7 +1232,7 @@ document.addEventListener("change", ev=>{
   const el = ev.target;
   if(el.id==="targetSel"){ S.target = Number(el.value); render(); }
   if(el.id==="budgetInp"){ S.budget = Number(el.value)||0; }
-  if(el.id==="cmdrSwap"){ S.commanders = [S.cards[norm(el.value)]].filter(Boolean); S.ai=null; render(); loadCombos(); }
+  if(el.id==="cmdrSwap"){ S.commanders = [S.cards[norm(el.value)]].filter(Boolean); S.ai=null; render(); loadCombos(); loadEdhrec(); }
   if(el.classList.contains("cutSel")){
     const add = el.dataset.add;
     const st = S.staged.find(s=>norm(s.add)===norm(add));
