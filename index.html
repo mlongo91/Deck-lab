@@ -78,7 +78,7 @@
   <div class="between" style="margin-bottom:14px">
     <div>
       <h1>Commander Deck Lab</h1>
-      <div class="sub" style="margin:2px 0 0">Legality, bracket, win paths, and upgrades — live Scryfall data</div><div class="sub" style="margin:2px 0 0;color:var(--gold);font-size:11px">build 12 · EDHREC synergy + ramp fix</div>
+      <div class="sub" style="margin:2px 0 0">Legality, bracket, win paths, and upgrades — live Scryfall data</div><div class="sub" style="margin:2px 0 0;color:var(--gold);font-size:11px">build 14 · Voltron and archetypes</div>
     </div>
     <div id="cmdrBox" style="text-align:right"></div>
   </div>
@@ -472,6 +472,43 @@ function assessBracket(sig, combos, comboStatus){
           counts:{gc,tutors,mld,xt,combos: comboUnknown ? "?" : combos.length}};
 }
 
+/* ---------------------------- archetype -----------------------------
+   What the deck is trying to do, read from what it's built out of rather
+   than from phrases its cards happen to contain. */
+function deckArchetype(){
+  const list = S.deck.map(e=>S.cards[norm(e.name)]).filter(Boolean);
+  const T = c=>typeOf(c), O = c=>oracleOf(c);
+  const nonland = list.filter(c=>!isLand(c));
+  const equipment = nonland.filter(c=>/equipment/i.test(T(c)));
+  const auras     = nonland.filter(c=>/aura/i.test(T(c)));
+  const creatures = nonland.filter(c=>/creature/i.test(T(c)));
+  const attachPayoff = nonland.filter(c=>/equipped creature|enchanted creature|attached to|equip \{|aura|equipment/i.test(O(c)));
+  const infect    = nonland.filter(c=>/\binfect\b|poison counter|\btoxic\b/i.test(O(c)));
+  const tokens    = nonland.filter(c=>/create (a|two|three|x|\w+) [^.]*token/i.test(O(c)));
+  const sacrifice = nonland.filter(c=>/sacrifice (a|another) creature/i.test(O(c)));
+  const counters  = nonland.filter(c=>/\+1\/\+1 counter/i.test(O(c)));
+  const spells    = nonland.filter(c=>/instant|sorcery/i.test(T(c)));
+  const reanimate = nonland.filter(c=>/from your graveyard to the battlefield|return target creature card from/i.test(O(c)));
+  const landfall  = nonland.filter(c=>/landfall|whenever a land/i.test(O(c)));
+
+  const suits = equipment.length + auras.length;
+  const scores = [
+    {name:"Voltron", score: (suits>=10 ? suits*2 : 0) + attachPayoff.length + (creatures.length<=16?6:0),
+     detail:{equipment:equipment.length, auras:auras.length, creatures:creatures.length,
+             infect:infect.length, equipmentNames:equipment.slice(0,4).map(c=>c.name),
+             auraNames:auras.slice(0,3).map(c=>c.name)}},
+    {name:"Tokens", score: tokens.length>=12 ? tokens.length : 0, detail:{}},
+    {name:"Aristocrats", score: sacrifice.length>=8 ? sacrifice.length*1.5 : 0, detail:{}},
+    {name:"+1/+1 counters", score: counters.length>=15 ? counters.length : 0, detail:{}},
+    {name:"Spellslinger", score: spells.length>=25 ? spells.length : 0, detail:{}},
+    {name:"Reanimator", score: reanimate.length>=8 ? reanimate.length*1.5 : 0, detail:{}},
+    {name:"Landfall", score: landfall.length>=8 ? landfall.length*1.5 : 0, detail:{}}
+  ].sort((a,b)=>b.score-a.score);
+
+  const top = scores[0];
+  return top.score > 0 ? top : null;
+}
+
 /* ------------------------ win conditions -------------------------- */
 const WIN_RULES = [
   {name:"Alternate win condition", test:c=>/you win the game|loses the game/i.test(oracleOf(c)),
@@ -492,6 +529,28 @@ const WIN_RULES = [
 ];
 
 function deriveWinConditions(combos){
+  const arch = deckArchetype();
+  if(arch && arch.name==="Voltron"){
+    const d = arch.detail;
+    const out = [];
+    out.push({name:"Commander damage (Voltron)", reliability:"primary",
+      how:"Suit up the commander and connect. Twenty-one commander damage removes a player regardless of life total, and it gets there in two or three swings once a few pieces are attached.",
+      keyCards: d.equipmentNames.concat(d.auraNames)});
+    if(d.infect) out.push({name:"Poison", reliability:"secondary",
+      how:"Ten poison counters is a separate clock that ignores life totals entirely. One connection with an infect source does most of the work on a creature this large.",
+      keyCards:["infect sources in the list"]});
+    out.push({name:"Combat damage", reliability:"secondary",
+      how:"The same threat kills through normal damage when commander damage isn't the faster route, especially with trample turning chump blocks into partial hits.",
+      keyCards: d.equipmentNames.slice(0,3)});
+    if(combos.length) out.unshift({name:"Infinite combo", reliability:"backup",
+      how:"A two-card loop is available as an alternative line: "+combos.map(c=>c.cards.join(" + ")).join("; ")+".",
+      keyCards: combos.flatMap(c=>c.cards).slice(0,4)});
+    return out;
+  }
+  return deriveWinConditionsGeneric(combos);
+}
+
+function deriveWinConditionsGeneric(combos){
   const list = S.deck.map(e=>S.cards[norm(e.name)]).filter(Boolean);
   const out = [];
   if(combos.length) out.push({name:"Infinite combo", reliability:"primary",
@@ -518,23 +577,72 @@ function slugify(n){
     .replace(/[^a-z0-9\s-]/g,"").replace(/\s+/g,"-").replace(/^-+|-+$/g,"");
 }
 
+/* Walks EDHREC's document for card lists without assuming its layout. */
+function parseEdhrec(raw){
+  const found = new Map();
+  (function walk(node, header){
+    if(Array.isArray(node)){ node.forEach(v=>walk(v, header)); return; }
+    if(!node || typeof node !== "object") return;
+    const h = node.header || node.tag || header;
+    if(Array.isArray(node.cardviews)){
+      node.cardviews.forEach(c=>{
+        if(!c || typeof c !== "object") return;
+        const name = c.name || c.card_name;
+        if(!name) return;
+        const entry = {name, synergy: typeof c.synergy==="number" ? c.synergy : null,
+          decks: c.num_decks || c.numDecks || null, list: String(h||"").slice(0,40)};
+        const prev = found.get(name);
+        if(!prev || (prev.synergy===null && entry.synergy!==null)) found.set(name, entry);
+      });
+    }
+    Object.keys(node).forEach(k=>walk(node[k], h));
+  })(raw, null);
+  return [...found.values()].sort((a,b)=>(b.synergy==null?-99:b.synergy)-(a.synergy==null?-99:a.synergy));
+}
+
 async function loadEdhrec(){
   const slug = slugify(S.commanders.map(c=>c.name).join(" "));
   S.edhrecSlug = slug;
   S.edhrec = null;
+  S.edhrecStatus = "loading";
   if(!slug){ S.edhrecStatus = "none"; return; }
+  render();
+
+  // 1. EDHREC directly, then through a relay if the browser blocks it.
+  //    Either way this needs nothing committed to the repo, so it works for
+  //    any commander and for anyone opening the page.
+  const target = "https://json.edhrec.com/pages/commanders/"+slug+".json";
+  const routes = [
+    {label:"live", url: target},
+    {label:"relay", url: "https://corsproxy.io/?url="+encodeURIComponent(target)},
+    {label:"relay", url: "https://api.allorigins.win/raw?url="+encodeURIComponent(target)}
+  ];
+  for(const route of routes){
+    try{
+      const r = await fetch(route.url);
+      if(!r.ok) continue;
+      const cards = parseEdhrec(await r.json());
+      if(cards.length >= 20){
+        S.edhrec = {commander: S.commanders.map(c=>c.name).join(" + "), cards, generated:null};
+        S.edhrecStatus = "ok"; S.edhrecSource = route.label;
+        render(); return;
+      }
+    }catch(e){ /* try the next route */ }
+  }
+
+  // 2. a copy committed to this site by the refresh workflow
   try{
     const r = await fetch(new URL("edhrec/"+slug+".json", location.href).href, {cache:"no-cache"});
-    if(!r.ok) throw new Error("HTTP "+r.status);
-    const d = await r.json();
-    S.edhrec = {
-      generated: d.generated, commander: d.commander,
-      cards: (d.cards||[]).map(row=>({name:row[0], synergy:row[1], decks:row[2], list:row[3]}))
-    };
-    S.edhrecStatus = "ok";
-  }catch(e){
-    S.edhrecStatus = "missing";
-  }
+    if(r.ok){
+      const d = await r.json();
+      S.edhrec = {generated:d.generated, commander:d.commander,
+        cards:(d.cards||[]).map(row=>({name:row[0], synergy:row[1], decks:row[2], list:row[3]}))};
+      S.edhrecStatus = "ok"; S.edhrecSource = "cached";
+      render(); return;
+    }
+  }catch(e){}
+
+  S.edhrecStatus = "missing";
   render();
 }
 
@@ -609,6 +717,8 @@ function deckTypeCounts(){
 }
 
 function offTheme(card, typeCounts, avgCmc){
+  const arch = deckArchetype();
+  if(arch && arch.name==="Voltron" && /equipment|aura/i.test(typeOf(card))) return null;
   const o = oracleOf(card);
   for(const ct of CREATURE_TYPES){
     const re = new RegExp("\\b"+ct+"s?\\b");
@@ -679,6 +789,7 @@ async function buildRecommendations(){
   const budget = S.budget ? " usd<="+S.budget : "";
   const have = new Set(S.deck.map(e=>norm(e.name)));
   const typeCounts = deckTypeCounts();
+  const arch = deckArchetype();
   const picked = [], seen = new Set(), rejected = [];
   const take = x => { if(!seen.has(norm(x.card.name))){ seen.add(norm(x.card.name)); picked.push(x); } };
 
@@ -704,6 +815,21 @@ async function buildRecommendations(){
       queries.push({why:"A Game Changer in your colors", q:"legal:commander "+ci+budget+" is:gamechanger"});
       queries.push({why:"Fast mana, which is what makes a deck play a bracket higher", q:base+' mv<=2 (o:"add two" or o:"add three") -t:land'});
       queries.push({why:"An efficient tutor", q:base+' mv<=3 o:"search your library for a card"'});
+    } else if(arch && arch.name==="Voltron"){
+      // this deck wins by making one creature huge and connecting with it, so
+      // the gaps that matter are protection, evasion, and finding the pieces
+      queries.push({why:"Protection — losing the commander to a removal spell is how this deck loses",
+        q:base+' (o:hexproof or o:indestructible or o:"protection from" or o:"totem armor" or o:"can\'t be the target")'});
+      queries.push({why:"Evasion so the damage actually connects",
+        q:base+' (o:"can\'t be blocked" or o:"must be blocked" or o:trample or o:"double strike")'});
+      queries.push({why:"Finds your best piece instead of drawing the wrong half",
+        q:base+' (o:"search your library for an equipment" or o:"search your library for an aura" or o:"search your library for an artifact card")'});
+      queries.push({why:"Cheaper equip costs mean more suiting up per turn",
+        q:base+' (o:"equip abilities" or o:"equip {0}" or o:"equip costs")'});
+      queries.push({why:"An extra combat step doubles a connected hit",
+        q:base+' o:"additional combat phase"'});
+      queries.push({why:"Rebuilds after a board wipe — the real risk to a single-threat deck",
+        q:base+' (o:"return all" o:"from your graveyard" or o:"return target artifact card from your graveyard")'});
     } else {
       if(sig.ramp.length<10) queries.push({why:"Deck is light on ramp", q:base+" "+ROLE_Q.ramp});
       if(sig.draw.length<10) queries.push({why:"Deck is light on card draw", q:base+" "+ROLE_Q.draw});
@@ -738,7 +864,9 @@ async function buildRecommendations(){
     ? (target>current
         ? "Combo completions and Game Changers first, then the cards " + (S.edhrec.commander||"this commander") + " decks run most distinctively. Cuts are the cards those decks run least."
         : "Ranked by EDHREC synergy for " + (S.edhrec.commander||"this commander") + " — how much more often a card shows up here than in decks generally, so staples everyone plays rank low.")
-    : (target<current
+    : (arch && arch.name==="Voltron" && target<=current
+        ? "Aimed at what a Voltron deck actually needs: protection, evasion, tutors for your best piece, and a way back after a wipe."
+      : target<current
         ? "To drop to Bracket "+target+", removals matter more than additions — see the reduction list below."
         : "No commander data yet, so these come from card text and general popularity. Run the Fetch commander data workflow for better suggestions.");
   if(S.key) await enrichRecommendations();
@@ -910,6 +1038,13 @@ function bracketHTML(v, sig, combos){
   if(sig.gameChangers.length) h += '<div class="panel"><h2>Game Changers in this deck</h2><div class="sub">Straight from Scryfall’s official tag.</div>'
     + sig.gameChangers.map(n=>'<div class="card-row" data-card="'+esc(n)+'"><span>'+esc(n)+'</span><span class="sub" style="margin:0">'+money(priceOf(S.cards[norm(n)]))+'</span></div>').join("")+'</div>';
 
+  const arch = deckArchetype();
+  if(arch) h += '<div class="panel"><h2>'+esc(arch.name)+'</h2><div class="sub">Read from what the deck is built out of'
+    + (arch.name==="Voltron"
+        ? ": "+arch.detail.equipment+" equipment, "+arch.detail.auras+" auras, "+arch.detail.creatures
+          +" creatures. A low creature count is correct here, not a gap."
+        : ".")
+    + '</div></div>';
   h += '<div class="panel"><h2>Deck shape</h2><div class="sub">From real card text, so these counts are dependable.</div><div class="stats">'
     + stat("Lands", sig.lands) + stat("Ramp", sig.ramp.length) + stat("Card draw", sig.draw.length)
     + stat("Interaction", sig.interaction.length) + stat("Avg mana value", sig.avgCmc.toFixed(2))
@@ -1002,8 +1137,16 @@ function upgradeHTML(v){
     +'</div><div class="row" style="margin-top:12px"><button class="primary" id="recBtn">'
     + (target?("Get swaps for Bracket "+target):"Get upgrade suggestions") +'</button></div>';
   h += S.edhrec
-    ? '<div class="sub" style="margin-top:10px;color:var(--good)">Using EDHREC data for '+esc(S.edhrec.commander||"")+', pulled '+esc(String(S.edhrec.generated||"").slice(0,10))+'.</div>'
-    : '<div class="banner" style="margin-top:10px">No EDHREC data for this commander yet. Actions tab \u2192 <b>Fetch commander data</b> \u2192 Run workflow \u2192 enter <b>'+esc(S.commanders[0]?S.commanders[0].name:"")+'</b>. Suggestions stay generic until then.</div>';
+    ? '<div class="sub" style="margin-top:10px;color:var(--good)">Using EDHREC data for '+esc(S.edhrec.commander||"")
+      + (S.edhrecSource==="live" ? ", live from EDHREC"
+         : S.edhrecSource==="relay" ? ", via a relay because your browser blocks EDHREC directly"
+         : ", from this site\u2019s weekly cache"
+         + (S.edhrec.generated ? " ("+esc(String(S.edhrec.generated).slice(0,10))+")" : ""))
+      + '.</div>'
+    : S.edhrecStatus==="loading"
+      ? '<div class="sub" style="margin-top:10px">Looking for commander data\u2026</div>'
+      : '<div class="banner" style="margin-top:10px">No commander-specific data available for '+esc(S.commanders[0]?S.commanders[0].name:"this commander")
+        + ' \u2014 EDHREC isn\u2019t reachable from your browser and this commander isn\u2019t in the cache. Suggestions below fall back to card text and general popularity.</div>';
   if(S.recNote) h += '<div class="sub" style="margin-top:10px">'+esc(S.recNote)+'</div>';
   if(S.rejected && S.rejected.length)
     h += '<div class="sub" style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">Filtered out as off-strategy: '

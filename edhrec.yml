@@ -1,0 +1,163 @@
+name: Fetch commander data
+
+# Run this by hand whenever you start working on a new commander.
+# Actions tab -> Fetch commander data -> Run workflow -> type the commander name.
+# It pulls EDHREC's public JSON for that commander and commits a trimmed copy,
+# so the app can read real synergy scores instead of guessing from card text.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commander:
+        description: 'One commander name. Leave blank to refresh the popular-commander cache.'
+        required: false
+        type: string
+      top:
+        description: 'How many popular commanders to cache when no name is given'
+        required: false
+        default: '300'
+        type: string
+  schedule:
+    - cron: "30 7 * * 1"   # weekly, after the combo refresh
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch and trim EDHREC data
+        env:
+          COMMANDER: ${{ inputs.commander }}
+          TOPN: ${{ inputs.top }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, sys, time, urllib.request, datetime
+
+          UA = {"User-Agent": "commander-deck-lab/1.0 (personal deck tool)"}
+
+          def get(url):
+              return json.load(urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=60))
+
+          def slugify(name):
+              s = re.sub(r"[^a-z0-9\s-]", "", name.lower())
+              return re.sub(r"\s+", "-", s).strip("-")
+
+          def walk_cardviews(raw):
+              """Collect every cardview in the document without assuming its layout."""
+              found = {}
+              def walk(node, header):
+                  if isinstance(node, dict):
+                      h = node.get("header") or node.get("tag") or header
+                      cv = node.get("cardviews")
+                      if isinstance(cv, list):
+                          for c in cv:
+                              if not isinstance(c, dict):
+                                  continue
+                              cname = c.get("name") or c.get("card_name")
+                              if not cname:
+                                  continue
+                              entry = {
+                                  "name": cname,
+                                  "synergy": c.get("synergy"),
+                                  "decks": c.get("num_decks") or c.get("numDecks"),
+                                  "sanitized": c.get("sanitized") or c.get("url") or "",
+                                  "list": str(h or "")[:40],
+                              }
+                              prev = found.get(cname)
+                              if prev is None or (prev.get("synergy") is None and entry["synergy"] is not None):
+                                  found[cname] = entry
+                      for v in node.values():
+                          walk(v, h)
+                  elif isinstance(node, list):
+                      for v in node:
+                          walk(v, header)
+              walk(raw, None)
+              return list(found.values())
+
+          def save(name, slug, cards):
+              cards.sort(key=lambda c: (c.get("synergy") is None, -(c.get("synergy") or 0)))
+              payload = {
+                  "commander": name, "slug": slug,
+                  "generated": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+                  "source": "EDHREC (json.edhrec.com)", "count": len(cards),
+                  "cards": [[c["name"], c["synergy"], c["decks"], c["list"]] for c in cards[:400]],
+              }
+              os.makedirs("edhrec", exist_ok=True)
+              with open("edhrec/%s.json" % slug, "w") as f:
+                  json.dump(payload, f, separators=(",", ":"))
+              return len(payload["cards"])
+
+          def fetch_one(name, slug=None):
+              slug = slug or slugify(name)
+              try:
+                  raw = get("https://json.edhrec.com/pages/commanders/%s.json" % slug)
+              except Exception as e:
+                  print("  skip %s (%s)" % (slug, e))
+                  return False
+              cards = walk_cardviews(raw)
+              if len(cards) < 50:
+                  print("  skip %s (only %d cards parsed)" % (slug, len(cards)))
+                  return False
+              n = save(name, slug, cards)
+              print("  %s -> %d cards" % (slug, n))
+              return True
+
+          name = (os.environ.get("COMMANDER") or "").strip()
+
+          if name:
+              # one commander, on request
+              if not fetch_one(name):
+                  sys.exit("Fetch failed. Check the spelling — slug tried: %s" % slugify(name))
+          else:
+              # cache the popular commanders so other people's decks work without setup
+              topn = int((os.environ.get("TOPN") or "300").strip() or 300)
+              roster = []
+              for url in ["https://json.edhrec.com/pages/commanders/year.json",
+                          "https://json.edhrec.com/pages/commanders/month.json",
+                          "https://json.edhrec.com/pages/commanders/week.json",
+                          "https://json.edhrec.com/pages/top/commanders.json"]:
+                  try:
+                      entries = walk_cardviews(get(url))
+                      print("roster from %s: %d" % (url, len(entries)))
+                      roster.extend(entries)
+                  except Exception as e:
+                      print("roster source failed: %s (%s)" % (url, e))
+                  time.sleep(1)
+
+              seen, ordered = set(), []
+              for e in roster:
+                  slug = (e.get("sanitized") or "").strip("/").split("/")[-1] or slugify(e["name"])
+                  if slug in seen:
+                      continue
+                  seen.add(slug)
+                  ordered.append((e["name"], slug))
+
+              if not ordered:
+                  sys.exit("Could not build a commander roster — EDHREC's format may have changed.")
+
+              print("caching %d of %d commanders" % (min(topn, len(ordered)), len(ordered)))
+              ok = 0
+              for nm, slug in ordered[:topn]:
+                  if fetch_one(nm, slug):
+                      ok += 1
+                  time.sleep(1.2)          # be a polite guest
+              print("cached", ok)
+              if ok < 10:
+                  sys.exit("Too few commanders cached — refusing to commit")
+          PY
+
+      - name: Commit
+        run: |
+          git config user.name "edhrec-data-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add edhrec/
+          if git diff --staged --quiet; then
+            echo "no change"
+          else
+            git commit -m "EDHREC data: ${{ inputs.commander }}"
+            git push
+          fi
