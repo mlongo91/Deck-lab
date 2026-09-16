@@ -29,7 +29,7 @@ jobs:
           gunzip -f variants.json.gz
           ls -lh variants.json
 
-      - name: Build combos.json
+      - name: Build combo index files
         run: |
           python3 - <<'PY'
           import json, os, datetime
@@ -72,55 +72,55 @@ jobs:
               leg = v.get("legalities") or {}
               val = leg.get("commander")
               if val is None:
-                  return True                      # no data, keep it
+                  return True
               if isinstance(val, bool):
                   return val
               return str(val).lower() in ("legal", "true")
 
-          def template_count(v):
-              # "requires" entries are roles, not specific cards
-              # (e.g. "a sacrifice outlet") — the combo needs one more piece
-              return len(v.get("requires") or [])
-
-          rows = []
+          two, three = [], []
           for v in variants:
               if not commander_legal(v):
                   continue
               names = card_names(v)
-              if not (2 <= len(names) <= 3):
+              n = len(names)
+              if n < 2 or n > 3:
                   continue
-              rows.append([
+              row = [
                   v.get("id") or v.get("variantId") or "",
                   names,
                   ", ".join(features(v)[:2])[:70],
-                  template_count(v),
-              ])
+                  len(v.get("requires") or []),
+              ]
+              (two if n == 2 else three).append(row)
 
-          print("combos kept (2-3 cards, commander legal):", len(rows))
+          print("2-card:", len(two), " 3-card:", len(three))
 
-          def write(rows, note):
+          def write(path, rows, note):
               payload = {
-                  "generated": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                  "generated": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
                   "source": "Commander Spellbook bulk data",
                   "count": len(rows),
                   "note": note,
                   "combos": rows,
               }
-              with open("combos.json", "w") as f:
+              with open(path, "w") as f:
                   json.dump(payload, f, separators=(",", ":"))
-              return os.path.getsize("combos.json")
+              mb = os.path.getsize(path) / 1e6
+              print(path, round(mb, 2), "MB")
+              return mb
 
-          size = write(rows, "two and three card combos, commander legal")
-          print("combos.json:", round(size/1e6, 2), "MB")
+          # loaded on every page view — keep it small
+          write("combos.json", two, "two card combos, commander legal")
 
-          # keep the phone download sane
-          if size > 6_000_000:
-              rows = [r for r in rows if len(r[1]) == 2]
-              size = write(rows, "two card combos only (trimmed for size)")
-              print("trimmed to 2-card only:", len(rows), round(size/1e6, 2), "MB")
+          # loaded only when the near-miss panel asks for it
+          mb = write("combos3.json", three, "three card combos, commander legal")
+          if mb > 8:
+              for r in three:
+                  r[2] = r[2][:28]
+              mb = write("combos3.json", three, "three card combos, result text shortened for size")
 
-          if len(rows) < 500:
-              raise SystemExit("suspiciously few combos — refusing to commit")
+          if len(two) < 500:
+              raise SystemExit("suspiciously few two-card combos — refusing to commit")
           PY
 
       - name: Commit if changed
@@ -128,7 +128,7 @@ jobs:
           rm -f variants.json
           git config user.name "combo-data-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add combos.json
+          git add combos.json combos3.json
           if git diff --staged --quiet; then
             echo "no change"
           else
