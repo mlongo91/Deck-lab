@@ -235,11 +235,19 @@ const isTutor = c => {
 const isRamp = c => {
   const t = typeOf(c); if(/land/i.test(t) && !/creature/i.test(t)) return false;
   const o = oracleOf(c);
-  return /add \{[wubrgcx0-9]/i.test(o) || /search your library for (a|up to (two|three)) (basic )?land/i.test(o);
+  return /add (\{[wubrgcx0-9]|one mana|two mana|three mana|four mana)/i.test(o) ||
+    /search your library for (a|up to (one|two|three|four)) (basic )?(land|plains|island|swamp|mountain|forest|wastes)(?: or [a-z]+)? card/i.test(o);
 };
 const isDraw = c => /draw (a|two|three|four|that many|x) cards?/i.test(oracleOf(c));
-const isInteraction = c =>
-  /(destroy|exile) (target|all|each)|counter target|deals? \d+ damage to (target|each)|return target .* to (its|their) owner's hand/i.test(oracleOf(c));
+const isInteraction = c => {
+  const o = oracleOf(c);
+  return /(destroy|exile) (up to (one|two|three|four|x) )?(target|all|each)/i.test(o) ||
+    /counter (up to (one|two|three) )?target/i.test(o) ||
+    /deals? [^.]*damage[^.]* to (target|each|any target)/i.test(o) ||
+    /return (up to (one|two|three) )?target[^.]* to (its|their) owner'?s hand/i.test(o) ||
+    /gains? control of target/i.test(o) ||
+    /fights? target/i.test(o);
+};
 const isLand = c => /^land|\bland\b/i.test(typeOf(c).split("//")[0]);
 
 function buildSignals(){
