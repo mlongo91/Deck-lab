@@ -78,7 +78,7 @@
   <div class="between" style="margin-bottom:14px">
     <div>
       <h1>Commander Deck Lab</h1>
-      <div class="sub" style="margin:2px 0 0">Legality, bracket, win paths, and upgrades — live Scryfall data</div><div class="sub" style="margin:2px 0 0;color:var(--gold);font-size:11px">build 8 · local combo index</div>
+      <div class="sub" style="margin:2px 0 0">Legality, bracket, win paths, and upgrades — live Scryfall data</div><div class="sub" style="margin:2px 0 0;color:var(--gold);font-size:11px">build 10 · three-card near-misses</div>
     </div>
     <div id="cmdrBox" style="text-align:right"></div>
   </div>
@@ -306,8 +306,37 @@ function matchCombos(db){
   return {included, almost};
 }
 
+async function loadCombos3(){
+  if(S.comboDB3Loaded || S.combos3Status==="loading") return;
+  S.combos3Status = "loading"; render();
+  try{
+    const r = await fetch(new URL("combos3.json", location.href).href, {cache:"no-cache"});
+    if(r.status===404) throw new Error("combos3.json isn't in the repo yet — re-run the workflow");
+    if(!r.ok) throw new Error("combos3.json returned "+r.status);
+    const d = await r.json();
+    const rows = (d.combos||[]).map(row=>({
+      id:row[0], cards:row[1]||[], result:row[2]||"", needsExtra:row[3]||0,
+      keys:(row[1]||[]).map(norm)
+    }));
+    S.comboDB.rows = S.comboDB.rows.concat(rows);
+    S.comboDB3Loaded = true;
+    S.combos3Status = "ok";
+    const m = matchCombos(S.comboDB);
+    S.combos = Object.assign({}, S.combos, {included:m.included, almost:m.almost, dbSize:S.comboDB.rows.length});
+    render();
+    const wanted = [...new Set(m.almost.map(c=>c.missing[0]))].filter(n=>!S.cards[norm(n)]).slice(0,225);
+    if(wanted.length){
+      try{ const {map} = await scryCollection(wanted); Object.assign(S.cards, map); }catch(e){}
+    }
+    render();
+  }catch(e){
+    S.combos3Status = "error"; S.combos3Error = e.message; render();
+  }
+}
+
 async function loadCombos(){
   S.combos = {included:[], almost:[], status:"loading", error:""};
+  if(S.comboDB3Loaded) S.combos3Status = "ok";
   render();
   try{
     const db = await loadComboDB();
@@ -513,37 +542,95 @@ function weakestCards(exclude){
     .sort((a,b)=>a.score-b.score).map(x=>x.c.name);
 }
 
+/* Cards whose payoff keys off a creature type the deck doesn't run turn the
+   deck into a different deck. Shared vocabulary is not shared strategy. */
+const CREATURE_TYPES = ["Plant","Sliver","Vampire","Zombie","Goblin","Elf","Dragon","Wizard","Merfolk",
+  "Angel","Demon","Warrior","Soldier","Knight","Cat","Dog","Rat","Squirrel","Spirit","Samurai","Ninja",
+  "Pirate","Dinosaur","Beast","Horror","Insect","Snake","Spider","Treefolk","Faerie","Giant","Hydra",
+  "Phoenix","Elemental","Fungus","Saproling","Human","Cleric","Rogue","Druid","Shaman","Fractal"];
+
+function deckTypeCounts(){
+  const counts = {};
+  S.deck.map(e=>S.cards[norm(e.name)]).filter(Boolean).forEach(c=>{
+    const t = typeOf(c);
+    CREATURE_TYPES.forEach(ct=>{ if(new RegExp("\\b"+ct+"\\b").test(t)) counts[ct]=(counts[ct]||0)+1; });
+  });
+  return counts;
+}
+
+function offTheme(card, typeCounts, avgCmc){
+  const o = oracleOf(card);
+  for(const ct of CREATURE_TYPES){
+    const re = new RegExp("\\b"+ct+"s?\\b");
+    if(re.test(o) && (typeCounts[ct]||0) < 2)
+      return ct+" payoff, and this deck runs "+(typeCounts[ct]||0)+" of them";
+  }
+  if((card.cmc||0) > avgCmc + 2.5 && !card.game_changer)
+    return "mana value "+card.cmc+" against a deck averaging "+avgCmc.toFixed(1);
+  return null;
+}
+
+/* Completing a combo already half-built is the single most bracket-relevant
+   addition available, and it comes from this deck rather than a keyword. */
+function comboCompletions(leg){
+  const ciSet = new Set(leg.colorIdentity);
+  const have = new Set(S.deck.map(e=>norm(e.name)));
+  const seen = new Set(), out = [];
+  (S.combos.almost||[]).forEach(c=>{
+    const name = c.missing[0], card = S.cards[norm(name)];
+    if(!card || have.has(norm(name)) || seen.has(norm(name))) return;
+    if((card.legalities||{}).commander!=="legal") return;
+    if((card.color_identity||[]).some(x=>!ciSet.has(x))) return;
+    const price = priceOf(card);
+    if(S.budget && price!=null && price>S.budget) return;
+    if(c.needsExtra) return;
+    seen.add(norm(name));
+    const partner = c.cards.filter(n=>norm(n)!==norm(name)).join(" + ");
+    out.push({card, price, gameChanger:card.game_changer===true,
+      why:"Completes "+partner+" — a two-card combo, which is the line between Bracket 3 and 4"});
+  });
+  return out.sort((a,b)=>(a.card.edhrec_rank||99999)-(b.card.edhrec_rank||99999));
+}
+
 async function buildRecommendations(){
   const leg = checkLegality();
   const ci = leg.colorIdentity.length ? "id<="+leg.colorIdentity.join("").toLowerCase() : "id<=c";
   const sig = buildSignals();
-  const combos = twoCardCombos();
-  const current = assessBracket(sig, combos, S.combos.status).bracket;
+  const current = assessBracket(sig, twoCardCombos(), S.combos.status).bracket;
   const target = S.target || current;
   const budget = S.budget ? " usd<="+S.budget : "";
   const capGC = target<=3 && sig.gameChangers.length>=(target===3?3:1);
   const base = "legal:commander -t:basic "+ci+budget+(capGC?" -is:gamechanger":"");
   const have = new Set(S.deck.map(e=>norm(e.name)));
-  const queries = [];
+  const typeCounts = deckTypeCounts();
+  const picked = [], seen = new Set(), rejected = [];
 
+  // combo completions first — deck-specific and directly bracket-relevant
   if(target>current){
-    queries.push({why:"Raises power — a Game Changer your colors support", q:"legal:commander "+ci+budget+" is:gamechanger"});
-    queries.push({why:"High-impact staple for this color identity", q:base+" (o:\"draw\" or o:\"add\") -t:land"});
+    comboCompletions(leg).slice(0,4).forEach(x=>{ seen.add(norm(x.card.name)); picked.push(x); });
   }
-  const gaps = [];
-  if(sig.ramp.length<10) gaps.push(["ramp","Deck is light on ramp"]);
-  if(sig.draw.length<10) gaps.push(["draw","Deck is light on card draw"]);
-  if(sig.interaction.length<8) gaps.push(["interaction","Deck is light on interaction"]);
-  gaps.push(["protection","Protection for your commander and key permanents"]);
-  gaps.forEach(([role,why])=>queries.push({why, q:base+" "+ROLE_Q[role]}));
-  deckThemes().forEach(t=>queries.push({why:"Fits your "+t.label+" theme ("+t.count+" cards already)", q:base+" "+t.q}));
 
-  const cuts = weakestCards();
-  const picked = [], seen = new Set();
-  let ci_ = 0;
+  const queries = [];
+  if(target>current){
+    // raising a bracket is about power, not curve filler
+    queries.push({why:"A Game Changer in your colors — three is the Bracket 3 ceiling", q:"legal:commander "+ci+budget+" is:gamechanger"});
+    queries.push({why:"Fast mana, which is what makes a deck play a bracket higher", q:base+' mv<=2 (o:"add two" or o:"add three" or o:"add {c}{c}") -t:land'});
+    queries.push({why:"An efficient tutor to find your best line more often", q:base+' mv<=3 o:"search your library for a card"'});
+    queries.push({why:"Free or near-free interaction to protect the win", q:base+' (o:"without paying its mana cost" or mv<=2) o:"counter target spell"'});
+    queries.push({why:"A finisher that ends the game on its own", q:base+' (o:"you win the game" or o:"loses the game" or o:"infinite")'});
+  } else {
+    const gaps = [];
+    if(sig.ramp.length<10) gaps.push(["ramp","Deck is light on ramp"]);
+    if(sig.draw.length<10) gaps.push(["draw","Deck is light on card draw"]);
+    if(sig.interaction.length<8) gaps.push(["interaction","Deck is light on interaction"]);
+    gaps.push(["protection","Protection for your commander and key permanents"]);
+    gaps.forEach(([role,why])=>queries.push({why, q:base+" "+ROLE_Q[role]}));
+    deckThemes().forEach(t=>queries.push({why:"Fits your "+t.label+" theme ("+t.count+" cards already)", q:base+" "+t.q}));
+  }
+
   for(const {why,q} of queries){
     let results = [];
-    try{ results = await scrySearch(q, 12); }catch(e){}
+    try{ results = await scrySearch(q, 15); }catch(e){}
     await sleep(110);
     for(const c of results){
       const key = norm(c.name);
@@ -551,19 +638,25 @@ async function buildRecommendations(){
       if((c.legalities||{}).commander !== "legal") continue;
       const price = priceOf(c);
       if(S.budget && price!=null && price > S.budget) continue;
+      const bad = offTheme(c, typeCounts, sig.avgCmc);
+      if(bad){ rejected.push(c.name+" — "+bad); continue; }
       seen.add(key);
-      picked.push({card:c, why, price, cut: cuts[ci_++] || "", gameChanger:c.game_changer===true});
+      picked.push({card:c, why, price, gameChanger:c.game_changer===true});
       break;
     }
     if(picked.length>=10) break;
   }
 
+  const cuts = weakestCards();
+  picked.forEach((p,i)=>{ if(!p.cut) p.cut = cuts[i] || ""; });
+
   S.recs = picked;
+  S.rejected = rejected.slice(0,8);
   S.recNote = target>current
-    ? "Adds chosen to push toward Bracket "+target+", sorted by how often decks in your colors play them."
+    ? "Aimed at Bracket "+target+": combo completions first, then Game Changers, fast mana, tutors, and free interaction. Curve filler doesn't move a deck between brackets."
     : target<current
       ? "To drop to Bracket "+target+", removals matter more than additions — see the reduction list below."
-      : "Chosen by EDHREC popularity within your colors, filtered to your budget and color identity.";
+      : "Chosen by how often decks in your colors play them, filtered to your budget, color identity, and your deck's creature types.";
   if(S.key) await enrichRecommendations();
 }
 
@@ -788,9 +881,18 @@ function winsHTML(combos){
   if(near.length){
     h += '<div class="panel"><h2>One card away</h2>'
       +'<div class="sub">Each of these completes a combo already half-built in your deck, and is legal in your colors. Tap to inspect or add.</div>'
+      + (S.comboDB3Loaded ? '' :
+          '<div style="margin:8px 0">'
+          + (S.combos3Status==="loading"
+              ? '<span class="sub">Loading three-card combos…</span>'
+              : S.combos3Status==="error"
+                ? '<span class="sub" style="color:var(--bad)">'+esc(S.combos3Error||"")+'</span>'
+                : '<button class="small" id="load3">Also check three-card combos</button>')
+          + '</div>')
       + near.map(x=>'<div class="card-row" data-card="'+esc(x.name)+'">'
         +'<span>'+esc(x.name)+'<br><span class="sub" style="margin:0">with '
-        + esc(x.combo.cards.filter(n=>norm(n)!==norm(x.name)).join(" + "))+'</span></span>'
+        + esc(x.combo.cards.filter(n=>norm(n)!==norm(x.name)).join(" + "))
+        + (x.combo.cards.length===3?' · 3-card combo':'')+'</span></span>'
         +'<span class="sub" style="margin:0">'+money(priceOf(x.card))+'</span></div>').join("")
       +'</div>';
   }
@@ -816,6 +918,9 @@ function upgradeHTML(v){
     +'</div><div class="row" style="margin-top:12px"><button class="primary" id="recBtn">'
     + (target?("Get swaps for Bracket "+target):"Get upgrade suggestions") +'</button></div>';
   if(S.recNote) h += '<div class="sub" style="margin-top:10px">'+esc(S.recNote)+'</div>';
+  if(S.rejected && S.rejected.length)
+    h += '<div class="sub" style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">Filtered out as off-strategy: '
+      + esc(S.rejected.join("; ")) + '</div>';
   h += '</div>';
 
   if(target && target < v.bracket){
@@ -1017,6 +1122,7 @@ document.addEventListener("click", async ev=>{
     document.getElementById("deckInput").value=""; msg(""); return;
   }
   if(t.id==="retryCombos"){ loadCombos(); return; }
+  if(t.id==="load3"){ loadCombos3(); return; }
   if(t.id==="diagBtn"){
     busy("Testing the Commander Spellbook endpoints…");
     const lines = await comboDiagnose(); msg(""); showDiagnostics(lines); return;
