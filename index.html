@@ -78,7 +78,7 @@
   <div class="between" style="margin-bottom:14px">
     <div>
       <h1>Commander Deck Lab</h1>
-      <div class="sub" style="margin:2px 0 0">Legality, bracket, win paths, and upgrades — live Scryfall data</div><div class="sub" style="margin:2px 0 0;color:var(--gold);font-size:11px">build 14 · Voltron and archetypes</div>
+      <div class="sub" style="margin:2px 0 0">Legality, bracket, win paths, and upgrades — live Scryfall data</div><div class="sub" style="margin:2px 0 0;color:var(--gold);font-size:11px">build 17 · categorized upgrades + rules-verified commander eligibility</div>
     </div>
     <div id="cmdrBox" style="text-align:right"></div>
   </div>
@@ -250,6 +250,21 @@ const isInteraction = c => {
 };
 const isLand = c => /^land|\bland\b/i.test(typeOf(c).split("//")[0]);
 
+/* Split out of the old catch-all isInteraction() so removal, board wipes,
+   and protection can be recommended as distinct categories instead of one
+   undifferentiated "interaction" bucket. isInteraction() itself is left
+   alone — other code still relies on it as the broader superset. */
+const isRemoval = c => {
+  const o = oracleOf(c);
+  return /(destroy|exile) target/i.test(o) ||
+    /deals? [^.]*damage to target/i.test(o) ||
+    /fights? target/i.test(o) ||
+    /return target[^.]* to (its|their) owner'?s hand/i.test(o);
+};
+const isBoardWipe = c => /destroy all creatures|exile all creatures|each creature (gets|is destroyed)|all creatures get -/i.test(oracleOf(c));
+const isProtection = c => /hexproof|indestructible|protection from|totem armor|\bward\b|can't be the target|prevent all damage/i.test(oracleOf(c));
+const isRecursion = c => /return target[^.]* from your graveyard|from your graveyard to (your hand|the battlefield)/i.test(oracleOf(c));
+
 function buildSignals(){
   const list = S.deck.map(e=>({e, c:S.cards[norm(e.name)]})).filter(x=>x.c);
   const pick = fn => list.filter(x=>fn(x.c)).map(x=>x.c.name);
@@ -414,19 +429,67 @@ async function comboDiagnose(){
 }
 
 
+/* Commander eligibility, per rule 903.3 of the Comprehensive Rules (as of
+   the copy in this project, effective Aug 7, 2026): a legendary card that is
+   (a) a creature card, (b) a Vehicle card, or (c) a Spacecraft card with a
+   power/toughness box — or a card whose own text grants it explicitly
+   (903.3a: Backgrounds, certain planeswalkers, etc.). Vehicles and Spacecraft
+   became eligible with Edge of Eternities; before that only (a) applied. */
+function hasPT(c){
+  if(c.power!=null && c.toughness!=null) return true;
+  const f = c.card_faces;
+  return !!(f && f[0] && f[0].power!=null && f[0].toughness!=null);
+}
+function eligibleCommander(c){
+  const t = typeOf(c);
+  if(!/legendary/i.test(t)) return /can be your commander/i.test(oracleOf(c));
+  if(/creature/i.test(t)) return true;
+  if(/vehicle/i.test(t)) return true;
+  if(/spacecraft/i.test(t) && hasPT(c)) return true;
+  return /can be your commander/i.test(oracleOf(c));
+}
+
+/* Partner compatibility, per rule 702.124f: the two partner-family abilities
+   must be the SAME variant, not just "each has some partner ability." A
+   plain-Partner card can't pair with a Partner-with card, two different
+   partner—[text] variants can't pair, and Background/Doctor's companion each
+   require a specific kind of other card, not just any partner text. */
+function partnerCompatible(a, b){
+  const oa = oracleOf(a), ob = oracleOf(b);
+  const plain = s => /\bpartner\b/i.test(s) && !/partner with|partner[—-]/i.test(s);
+  if(plain(oa) && plain(ob)) return true;
+
+  const variant = s => { const m = s.match(/partner[—-]\s*([a-z &]+)/i); return m ? norm(m[1]) : null; };
+  const va = variant(oa), vb = variant(ob);
+  if(va && vb && va===vb) return true;
+
+  const partnerWith = s => { const m = s.match(/partner with ([^".\n]+)/i); return m ? norm(m[1].trim()) : null; };
+  if(partnerWith(oa)===norm(b.name) || partnerWith(ob)===norm(a.name)) return true;
+
+  const isBackground = c => /background/i.test(typeOf(c));
+  if(/choose a background/i.test(oa) && isBackground(b)) return true;
+  if(/choose a background/i.test(ob) && isBackground(a)) return true;
+
+  const isDoctor = c => /time lord/i.test(typeOf(c)) && /doctor/i.test(typeOf(c));
+  if(/doctor's companion/i.test(oa) && isDoctor(b)) return true;
+  if(/doctor's companion/i.test(ob) && isDoctor(a)) return true;
+
+  return false;
+}
+
 function checkLegality(){
   const errors=[], warnings=[];
   const total = S.deck.reduce((s,e)=>s+e.qty,0);
   if(total!==100) errors.push("Deck has "+total+" cards. Commander decks are exactly 100, including the commander.");
   if(!S.commanders.length) errors.push("No commander identified.");
   S.commanders.forEach(c=>{
-    const t=typeOf(c);
-    if(!(/legendary/i.test(t)&&/creature/i.test(t)) && !/can be your commander/i.test(oracleOf(c)))
-      errors.push(c.name+" can't be a commander — it isn't a legendary creature.");
+    if(!eligibleCommander(c))
+      errors.push(c.name+" can't be a commander — it isn't a legendary permanent with power and toughness, and its text doesn't otherwise grant it.");
   });
   if(S.commanders.length===2){
-    const ok = S.commanders.every(c=>/partner|friends forever|doctor's companion|choose a background/i.test(oracleOf(c)));
-    if(!ok) errors.push("Two commanders listed, but they don't share a partner-style ability.");
+    const [a,b] = S.commanders;
+    if(!partnerCompatible(a,b))
+      errors.push(a.name+" and "+b.name+" don't share a compatible partner ability — both need plain Partner, the same “partner—” variant, mutual Partner with, or a Background pairing.");
   }
   if(S.commanders.length>2) errors.push("More than two commanders listed.");
 
@@ -475,25 +538,32 @@ function assessBracket(sig, combos, comboStatus){
 /* ---------------------------- archetype -----------------------------
    What the deck is trying to do, read from what it's built out of rather
    than from phrases its cards happen to contain. */
-function deckArchetype(){
+function strategySignals(){
   const list = S.deck.map(e=>S.cards[norm(e.name)]).filter(Boolean);
   const T = c=>typeOf(c), O = c=>oracleOf(c);
   const nonland = list.filter(c=>!isLand(c));
-  const equipment = nonland.filter(c=>/equipment/i.test(T(c)));
-  const auras     = nonland.filter(c=>/aura/i.test(T(c)));
-  const creatures = nonland.filter(c=>/creature/i.test(T(c)));
-  const attachPayoff = nonland.filter(c=>/equipped creature|enchanted creature|attached to|equip \{|aura|equipment/i.test(O(c)));
-  const infect    = nonland.filter(c=>/\binfect\b|poison counter|\btoxic\b/i.test(O(c)));
-  const tokens    = nonland.filter(c=>/create (a|two|three|x|\w+) [^.]*token/i.test(O(c)));
-  const sacrifice = nonland.filter(c=>/sacrifice (a|another) creature/i.test(O(c)));
-  const counters  = nonland.filter(c=>/\+1\/\+1 counter/i.test(O(c)));
-  const spells    = nonland.filter(c=>/instant|sorcery/i.test(T(c)));
-  const reanimate = nonland.filter(c=>/from your graveyard to the battlefield|return target creature card from/i.test(O(c)));
-  const landfall  = nonland.filter(c=>/landfall|whenever a land/i.test(O(c)));
+  return {
+    list, nonland,
+    equipment:  nonland.filter(c=>/equipment/i.test(T(c))),
+    auras:      nonland.filter(c=>/aura/i.test(T(c))),
+    creatures:  nonland.filter(c=>/creature/i.test(T(c))),
+    attachPayoff: nonland.filter(c=>/equipped creature|enchanted creature|attached to|equip \{|aura|equipment/i.test(O(c))),
+    infect:     nonland.filter(c=>/\binfect\b|poison counter|\btoxic\b/i.test(O(c))),
+    tokens:     nonland.filter(c=>/create (a|two|three|x|\w+) [^.]*token/i.test(O(c))),
+    sacrifice:  nonland.filter(c=>/sacrifice (a|another) creature/i.test(O(c))),
+    counters:   nonland.filter(c=>/\+1\/\+1 counter/i.test(O(c))),
+    spells:     nonland.filter(c=>/instant|sorcery/i.test(T(c))),
+    reanimate:  nonland.filter(c=>/from your graveyard to the battlefield|return target creature card from/i.test(O(c))),
+    landfall:   nonland.filter(c=>/landfall|whenever a land/i.test(O(c)))
+  };
+}
 
+function deckArchetype(){
+  const {equipment, auras, creatures, attachPayoff, infect, tokens, sacrifice, counters, spells, reanimate, landfall} = strategySignals();
   const suits = equipment.length + auras.length;
   const scores = [
-    {name:"Voltron", score: (suits>=10 ? suits*2 : 0) + attachPayoff.length + (creatures.length<=16?6:0),
+    {name:"Voltron", score: (suits===0 && attachPayoff.length===0) ? 0 :
+       (suits>=10 ? suits*2 : 0) + attachPayoff.length + (creatures.length<=16?6:0),
      detail:{equipment:equipment.length, auras:auras.length, creatures:creatures.length,
              infect:infect.length, equipmentNames:equipment.slice(0,4).map(c=>c.name),
              auraNames:auras.slice(0,3).map(c=>c.name)}},
@@ -668,6 +738,80 @@ const ROLE_Q = {
   protection:'(o:hexproof or o:indestructible or o:"protection from")'
 };
 
+/* ------------------- upgrade categorization ------------------------
+   Two kinds of category shown on the Upgrade tab: strategies this deck is
+   actually presenting (below, keyed off the same signals as deckArchetype,
+   so "Voltron" here means the same thing it means there) and general roles
+   every deck needs regardless of strategy (ROLE_CATS, further down). A
+   candidate card can match more than one category; whichever is checked
+   first in buildRecommendations wins, so order there is deliberate. */
+const STRATEGIES = [
+  { name:"Voltron", threshold:6,
+    test: c => /equipment|aura/i.test(typeOf(c)) ||
+      /equipped creature|enchanted creature|attached to|equip \{/i.test(oracleOf(c)),
+    queries: [
+      {why:"Protection — losing the commander to a removal spell is how this deck loses",
+        q:'(o:hexproof or o:indestructible or o:"protection from" or o:"totem armor" or o:"can\'t be the target")'},
+      {why:"Evasion so the damage actually connects",
+        q:'(o:"can\'t be blocked" or o:"must be blocked" or o:trample or o:"double strike")'},
+      {why:"Finds your best piece instead of drawing the wrong half",
+        q:'(o:"search your library for an equipment" or o:"search your library for an aura" or o:"search your library for an artifact card")'},
+      {why:"Cheaper equip costs mean more suiting up per turn",
+        q:'(o:"equip abilities" or o:"equip {0}" or o:"equip costs")'},
+      {why:"An extra combat step doubles a connected hit", q:'o:"additional combat phase"'},
+      {why:"Rebuilds after a board wipe — the real risk to a single-threat deck",
+        q:'(o:"return all" o:"from your graveyard" or o:"return target artifact card from your graveyard")'}
+    ]},
+  { name:"Tokens", threshold:8, test: c=>/create (a|two|three|x|\w+) [^.]*token/i.test(oracleOf(c)),
+    queries:[{why:"Makes more tokens for your token plan", q:'o:token o:create'}] },
+  { name:"Aristocrats", threshold:6, test: c=>/sacrifice (a|another) creature/i.test(oracleOf(c)),
+    queries:[{why:"A sacrifice outlet or payoff for your Aristocrats plan", q:'o:"sacrifice a creature"'}] },
+  { name:"+1/+1 Counters", threshold:10, test: c=>/\+1\/\+1 counter/i.test(oracleOf(c)),
+    queries:[{why:"Adds to your +1/+1 counters plan", q:'o:"+1/+1 counter"'}] },
+  { name:"Spellslinger", threshold:18, test: c=>/instant|sorcery/i.test(typeOf(c)) || /instant or sorcery/i.test(oracleOf(c)),
+    queries:[{why:"Rewards or adds to your spell-heavy plan", q:'o:"instant or sorcery"'}] },
+  { name:"Reanimator", threshold:6, test: c=>/from your graveyard to the battlefield|return target creature card from/i.test(oracleOf(c)),
+    queries:[{why:"Gets a creature back from the graveyard", q:'o:"return target creature card from your graveyard to the battlefield"'}] },
+  { name:"Landfall", threshold:6, test: c=>/landfall|whenever a land/i.test(oracleOf(c)),
+    queries:[{why:"Rewards playing lands", q:'o:landfall'}] }
+];
+
+/* Independent detectors (unlike the winner-take-all deckArchetype), each
+   checked against its own threshold, so a deck can show as both Tokens and
+   Aristocrats at once instead of picking a single dominant label. */
+function deckStrategies(){
+  const sig = strategySignals();
+  const suits = sig.equipment.length + sig.auras.length;
+  const out = [];
+  STRATEGIES.forEach(s=>{
+    const count = s.name==="Voltron" ? Math.max(suits, sig.attachPayoff.length)
+      : sig.nonland.filter(s.test).length;
+    if(count >= s.threshold) out.push({name:s.name, count, test:s.test, queries:s.queries});
+  });
+  return out.sort((a,b)=>b.count-a.count).slice(0,4);
+}
+
+const ROLE_CATS = [
+  {name:"Removal", test:isRemoval, healthy:8, q:'(o:"destroy target" or o:"exile target" or o:"damage to target" or o:"fight target")'},
+  {name:"Board Wipe", test:isBoardWipe, healthy:2, q:'(o:"destroy all creatures" or o:"exile all creatures")'},
+  {name:"Protection", test:isProtection, healthy:3, q:ROLE_Q.protection},
+  {name:"Ramp", test:isRamp, healthy:10, q:ROLE_Q.ramp},
+  {name:"Card Draw", test:isDraw, healthy:10, q:ROLE_Q.draw},
+  {name:"Recursion", test:isRecursion, healthy:3, q:'(o:"from your graveyard to your hand" or o:"from your graveyard to the battlefield")'},
+  {name:"Tutor", test:isTutor, healthy:2, q:'o:"search your library for a card"'}
+];
+
+/* Every general role a deck is short on, most-deficient first (by how far
+   under its healthy count it is, not raw count, so "0 of 2" outranks
+   "7 of 10"). Capped at 4 so the Upgrade tab doesn't turn into a checklist. */
+function roleGaps(){
+  const all = S.deck.map(e=>S.cards[norm(e.name)]).filter(Boolean);
+  return ROLE_CATS.map(r=>({...r, count: all.filter(r.test).length}))
+    .filter(r=>r.count < r.healthy)
+    .sort((a,b)=>(a.count/a.healthy)-(b.count/b.healthy))
+    .slice(0,4);
+}
+
 function deckThemes(){
   const list = S.deck.map(e=>S.cards[norm(e.name)]).filter(Boolean);
   return THEMES.map(([label,q,re])=>({label,q,count:list.filter(c=>re.test(oracleOf(c)||c.mana_cost||"")).length}))
@@ -775,7 +919,7 @@ async function edhrecPicks(leg, target, current){
     if(entry.list) bits.push(entry.list.toLowerCase());
     out.push({card, price, gameChanger:card.game_changer===true,
       synergy: syn==null ? -99 : syn,
-      why:"Played with "+(S.edhrec.commander||"this commander")+" — "+bits.join(", ")});
+      bits: bits.join(", ")});
   });
   return out;
 }
@@ -789,54 +933,49 @@ async function buildRecommendations(){
   const budget = S.budget ? " usd<="+S.budget : "";
   const have = new Set(S.deck.map(e=>norm(e.name)));
   const typeCounts = deckTypeCounts();
-  const arch = deckArchetype();
+  const strategies = deckStrategies();
+  const gaps = roleGaps();
   const picked = [], seen = new Set(), rejected = [];
-  const take = x => { if(!seen.has(norm(x.card.name))){ seen.add(norm(x.card.name)); picked.push(x); } };
+  const take = (x, category) => {
+    const key = norm(x.card.name);
+    if(seen.has(key)) return;
+    seen.add(key); x.category = category; picked.push(x);
+  };
 
   // 1. completing a combo is the most bracket-relevant add there is
-  if(target>current) comboCompletions(leg).slice(0,4).forEach(take);
+  if(target>current) comboCompletions(leg).slice(0,4).forEach(x=>take(x,"Raise bracket"));
 
-  // 2. cards this commander's decks actually play, ranked by synergy
   if(S.edhrec){
-    const picks = await edhrecPicks(leg, target, current);
-    picks.sort((a,b)=>b.synergy-a.synergy);
-    if(target>current){
-      picks.filter(p=>p.gameChanger).slice(0,3).forEach(take);
-    }
-    picks.slice(0, 14).forEach(p=>{ if(picked.length<10) take(p); });
-  }
-
-  // 3. only fall back to text search when there's no commander data
-  if(!S.edhrec){
+    // 2. cards this commander's decks actually play, ranked by synergy,
+    //    sorted into the strategy and role sections below rather than one
+    //    flat list — a Voltron pick and a "you're low on removal" pick are
+    //    different kinds of advice and should read that way.
+    const pool = await edhrecPicks(leg, target, current);
+    pool.sort((a,b)=>b.synergy-a.synergy);
+    const tag = (p,label,lead) => take({...p, why: lead + (p.bits?" — "+p.bits:"")}, label);
+    if(target>current) pool.filter(p=>p.gameChanger).slice(0,3)
+      .forEach(p=>tag(p,"Raise bracket","A Game Changer "+(S.edhrec.commander||"this commander")+" decks run"));
+    strategies.forEach(s=>pool.filter(p=>s.test(p.card)).slice(0,3)
+      .forEach(p=>tag(p,s.name,"Fits your "+s.name+" plan")));
+    gaps.forEach(r=>pool.filter(p=>r.test(p.card)).slice(0,2)
+      .forEach(p=>tag(p,r.name,"Shores up "+r.name.toLowerCase()+" — "+r.count+" of a healthy "+r.healthy)));
+    if(picked.length<6) pool.slice(0,10)
+      .forEach(p=>tag(p,"Other synergy picks","Played with "+(S.edhrec.commander||"this commander")));
+  } else {
+    // 3. only fall back to text search when there's no commander data
     const capGC = target<=3 && sig.gameChangers.length>=(target===3?3:1);
     const base = "legal:commander -t:basic "+ci+budget+(capGC?" -is:gamechanger":"");
-    const queries = [];
+    const jobs = [];
     if(target>current){
-      queries.push({why:"A Game Changer in your colors", q:"legal:commander "+ci+budget+" is:gamechanger"});
-      queries.push({why:"Fast mana, which is what makes a deck play a bracket higher", q:base+' mv<=2 (o:"add two" or o:"add three") -t:land'});
-      queries.push({why:"An efficient tutor", q:base+' mv<=3 o:"search your library for a card"'});
-    } else if(arch && arch.name==="Voltron"){
-      // this deck wins by making one creature huge and connecting with it, so
-      // the gaps that matter are protection, evasion, and finding the pieces
-      queries.push({why:"Protection — losing the commander to a removal spell is how this deck loses",
-        q:base+' (o:hexproof or o:indestructible or o:"protection from" or o:"totem armor" or o:"can\'t be the target")'});
-      queries.push({why:"Evasion so the damage actually connects",
-        q:base+' (o:"can\'t be blocked" or o:"must be blocked" or o:trample or o:"double strike")'});
-      queries.push({why:"Finds your best piece instead of drawing the wrong half",
-        q:base+' (o:"search your library for an equipment" or o:"search your library for an aura" or o:"search your library for an artifact card")'});
-      queries.push({why:"Cheaper equip costs mean more suiting up per turn",
-        q:base+' (o:"equip abilities" or o:"equip {0}" or o:"equip costs")'});
-      queries.push({why:"An extra combat step doubles a connected hit",
-        q:base+' o:"additional combat phase"'});
-      queries.push({why:"Rebuilds after a board wipe — the real risk to a single-threat deck",
-        q:base+' (o:"return all" o:"from your graveyard" or o:"return target artifact card from your graveyard")'});
-    } else {
-      if(sig.ramp.length<10) queries.push({why:"Deck is light on ramp", q:base+" "+ROLE_Q.ramp});
-      if(sig.draw.length<10) queries.push({why:"Deck is light on card draw", q:base+" "+ROLE_Q.draw});
-      if(sig.interaction.length<8) queries.push({why:"Deck is light on interaction", q:base+" "+ROLE_Q.interaction});
-      deckThemes().forEach(t=>queries.push({why:"Fits your "+t.label+" theme ("+t.count+" cards already)", q:base+" "+t.q}));
+      jobs.push({category:"Raise bracket", why:"A Game Changer in your colors", q:"legal:commander "+ci+budget+" is:gamechanger"});
+      jobs.push({category:"Raise bracket", why:"Fast mana, which is what makes a deck play a bracket higher", q:base+' mv<=2 (o:"add two" or o:"add three") -t:land'});
+      jobs.push({category:"Raise bracket", why:"An efficient tutor", q:base+' mv<=3 o:"search your library for a card"'});
     }
-    for(const {why,q} of queries){
+    strategies.forEach(s=>s.queries.forEach(qq=>jobs.push({category:s.name, why:qq.why, q:base+" "+qq.q})));
+    gaps.forEach(r=>jobs.push({category:r.name, why:"Deck is light on "+r.name.toLowerCase()+" ("+r.count+" of a healthy "+r.healthy+")", q:base+" "+r.q}));
+    if(!strategies.length) deckThemes().forEach(t=>jobs.push({category:t.label, why:"Fits your "+t.label+" theme ("+t.count+" cards already)", q:base+" "+t.q}));
+
+    for(const {category,why,q} of jobs){
       let results = [];
       try{ results = await scrySearch(q, 15); }catch(e){}
       await sleep(110);
@@ -848,27 +987,27 @@ async function buildRecommendations(){
         if(S.budget && price!=null && price > S.budget) continue;
         const bad = offTheme(c, typeCounts, sig.avgCmc);
         if(bad){ rejected.push(c.name+" — "+bad); continue; }
-        take({card:c, why, price, gameChanger:c.game_changer===true});
+        take({card:c, why, price, gameChanger:c.game_changer===true}, category);
         break;
       }
-      if(picked.length>=10) break;
+      if(picked.length>=24) break;
     }
   }
 
   const cuts = weakestCards();
   picked.forEach((p,i)=>{ if(!p.cut) p.cut = cuts[i] || ""; });
 
-  S.recs = picked.slice(0,10);
+  S.recs = picked.slice(0,24);
   S.rejected = rejected.slice(0,8);
   S.recNote = S.edhrec
     ? (target>current
-        ? "Combo completions and Game Changers first, then the cards " + (S.edhrec.commander||"this commander") + " decks run most distinctively. Cuts are the cards those decks run least."
-        : "Ranked by EDHREC synergy for " + (S.edhrec.commander||"this commander") + " — how much more often a card shows up here than in decks generally, so staples everyone plays rank low.")
-    : (arch && arch.name==="Voltron" && target<=current
-        ? "Aimed at what a Voltron deck actually needs: protection, evasion, tutors for your best piece, and a way back after a wipe."
-      : target<current
+        ? "Combo completions and Game Changers first, then picks grouped by your deck's own strategies and by general roles it's light on. Cuts are the cards "+(S.edhrec.commander||"this commander")+" decks run least."
+        : "Grouped by your deck's own strategies and by general roles (removal, protection, ramp, and the rest) it's light on — ranked within each group by EDHREC synergy.")
+    : (target<current
         ? "To drop to Bracket "+target+", removals matter more than additions — see the reduction list below."
-        : "No commander data yet, so these come from card text and general popularity. Run the Fetch commander data workflow for better suggestions.");
+        : strategies.length
+          ? "No commander data yet, so these come from card text and general popularity, grouped by the strategies your decklist shows and general roles it's light on."
+          : "No commander data yet, so these come from card text and general popularity. Run the Fetch commander data workflow for better suggestions.");
   if(S.key) await enrichRecommendations();
 }
 
@@ -959,9 +1098,7 @@ async function loadDeck(text){
 
     const explicit = entries.filter(e=>e.commander).map(e=>e.name);
     const legends = entries.filter(e=>{
-      const c=map[norm(e.name)]; if(!c) return false;
-      const t=typeOf(c);
-      return (/legendary/i.test(t)&&/creature/i.test(t)) || /can be your commander/i.test(oracleOf(c));
+      const c=map[norm(e.name)]; return c && eligibleCommander(c);
     }).map(e=>e.name);
     S.commanderOptions = legends;
     S.commanders = (explicit.length?explicit:legends.slice(0,1)).map(n=>map[norm(n)]).filter(Boolean);
@@ -1161,24 +1298,42 @@ function upgradeHTML(v){
       + (plan.length?"":'<div class="sub">Nothing structural is holding it up — the deck is simply fast.</div>')+'</div>';
   }
 
-  h += S.recs.map(r=>{
-    const on = S.staged.some(s=>norm(s.add)===norm(r.card.name));
-    const cut = (S.staged.find(s=>norm(s.add)===norm(r.card.name))||{}).cut || r.cut || "";
-    return '<div class="panel" style="'+(on?"border-color:var(--gold)":"")+'">'
-      +'<div class="between"><h2 class="card-link" data-card="'+esc(r.card.name)+'" style="cursor:pointer">'+esc(r.card.name)+'</h2>'
-      +'<span class="sub" style="margin:0;white-space:nowrap">'+money(r.price)+'</span></div>'
-      +'<div class="sub" style="margin:2px 0 0">'+esc(typeOf(r.card).split("//")[0])
-      + (r.gameChanger?' · <span class="gc">Game Changer</span>':'')
-      + (r.card.edhrec_rank?' · EDHREC #'+r.card.edhrec_rank:'')+'</div>'
-      +'<div style="margin-top:8px">'+esc(r.why)+'</div>'
-      +'<div class="row" style="margin-top:10px"><span class="sub" style="margin:0">in place of</span>'
-      +'<select class="cutSel" data-add="'+esc(r.card.name)+'"><option value="">choose a cut</option>'
-      + S.deck.filter(e=>!S.commanders.some(c=>norm(c.name)===norm(e.name)))
-          .map(e=>'<option '+(norm(e.name)===norm(cut)?"selected":"")+'>'+esc(e.name)+'</option>').join("")
-      +'</select>'
-      +'<button class="small '+(on?"danger":"")+'" data-stage="'+esc(r.card.name)+'">'+(on?"Unstage":"Stage swap")+'</button></div></div>';
-  }).join("");
+  h += recGroups(S.recs).map(g =>
+    '<div class="sub" style="margin:18px 2px 6px;text-transform:uppercase;letter-spacing:.04em;font-size:11px;color:var(--gold)">'+esc(g.name)+'</div>'
+    + g.items.map(recPanelHTML).join("")
+  ).join("");
   return h;
+}
+
+/* Groups stay in first-seen order out of S.recs, which buildRecommendations
+   already populates strategy-first, then general-role gaps, so the deck's
+   own plan reads above generic advice without sorting again here. */
+function recGroups(recs){
+  const order = [], byName = new Map();
+  recs.forEach(r=>{
+    const name = r.category || "Other";
+    if(!byName.has(name)){ byName.set(name, []); order.push(name); }
+    byName.get(name).push(r);
+  });
+  return order.map(name=>({name, items:byName.get(name)}));
+}
+
+function recPanelHTML(r){
+  const on = S.staged.some(s=>norm(s.add)===norm(r.card.name));
+  const cut = (S.staged.find(s=>norm(s.add)===norm(r.card.name))||{}).cut || r.cut || "";
+  return '<div class="panel" style="'+(on?"border-color:var(--gold)":"")+'">'
+    +'<div class="between"><h2 class="card-link" data-card="'+esc(r.card.name)+'" style="cursor:pointer">'+esc(r.card.name)+'</h2>'
+    +'<span class="sub" style="margin:0;white-space:nowrap">'+money(r.price)+'</span></div>'
+    +'<div class="sub" style="margin:2px 0 0">'+esc(typeOf(r.card).split("//")[0])
+    + (r.gameChanger?' · <span class="gc">Game Changer</span>':'')
+    + (r.card.edhrec_rank?' · EDHREC #'+r.card.edhrec_rank:'')+'</div>'
+    +'<div style="margin-top:8px">'+esc(r.why)+'</div>'
+    +'<div class="row" style="margin-top:10px"><span class="sub" style="margin:0">in place of</span>'
+    +'<select class="cutSel" data-add="'+esc(r.card.name)+'"><option value="">choose a cut</option>'
+    + S.deck.filter(e=>!S.commanders.some(c=>norm(c.name)===norm(e.name)))
+        .map(e=>'<option '+(norm(e.name)===norm(cut)?"selected":"")+'>'+esc(e.name)+'</option>').join("")
+    +'</select>'
+    +'<button class="small '+(on?"danger":"")+'" data-stage="'+esc(r.card.name)+'">'+(on?"Unstage":"Stage swap")+'</button></div></div>';
 }
 
 function deckHTML(leg){
